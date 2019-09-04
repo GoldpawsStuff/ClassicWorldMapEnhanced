@@ -44,6 +44,53 @@ local Container = {
 	end
 }
 
+-- Zone Levels
+local zoneData = {
+	-- Eastern Kingdoms
+	[1416] = { min = 27, max = 39 }, -- Alterac Mountains
+	[1417] = { min = 30, max = 40 }, -- Arathi Highlands
+	[1418] = { min = 36, max = 45 }, -- Badlands
+	[1419] = { min = 46, max = 63 }, -- Blasted Lands
+	[1428] = { min = 50, max = 59 }, -- Burning Steppes
+	[1430] = { min = 50, max = 60 }, -- Deadwind Pass
+	[1426] = { min =  1, max = 12 }, -- Dun Morogh
+	[1431] = { min = 10, max = 30 }, -- Duskwood
+	[1423] = { min = 54, max = 59 }, -- Eastern Plaguelands
+	[1429] = { min =  1, max = 10 }, -- Elwynn Forest
+	[1448] = { min = 47, max = 54 }, -- Felwood
+	[1424] = { min = 20, max = 31 }, -- Hillsbrad Foothills
+	[1432] = { min = 10, max = 18 }, -- Loch Modan
+	[1433] = { min = 15, max = 25 }, -- Redridge Mountains
+	[1427] = { min = 43, max = 56 }, -- Searing Gorge
+	[1421] = { min = 10, max = 20 }, -- Silverpine Forest
+	[1434] = { min = 30, max = 50 }, -- Stranglethorn Vale
+	[1435] = { min = 36, max = 43 }, -- Swamp of Sorrows
+	[1425] = { min = 41, max = 49 }, -- The Hinterlands
+	[1420] = { min =  1, max = 12 }, -- Tirisfal Glades
+	[1436] = { min =  9, max = 18 }, -- Westfall
+	[1422] = { min = 46, max = 57 }, -- Western Plaguelands
+	[1437] = { min = 20, max = 30 }, -- Wetlands
+
+	-- Kalimdor
+	[1440] = { min = 19, max = 30 }, -- Ashenvale
+	[1447] = { min = 42, max = 55 }, -- Azshara
+	[1439] = { min = 11, max = 19 }, -- Darkshore
+	[1443] = { min = 30, max = 39 }, -- Desolace
+	[1411] = { min =  1, max = 10 }, -- Durotar
+	[1445] = { min = 36, max = 61 }, -- Dustwallow Marsh
+	[1444] = { min = 41, max = 60 }, -- Feralas
+	[1450] = { min = 15, max = 15 }, -- Moonglade
+	[1412] = { min =  1, max = 10 }, -- Mulgore
+	[1451] = { min = 55, max = 59 }, -- Silithus
+	[1442] = { min = 15, max = 25 }, -- Stonetalon Mountains
+	[1446] = { min = 40, max = 50 }, -- Tanaris
+	[1438] = { min =  1, max = 11 }, -- Teldrassil
+	[1413] = { min = 10, max = 33 }, -- The Barrens
+	[1441] = { min = 24, max = 35 }, -- Thousand Needles
+	[1449] = { min = 48, max = 55 }, -- Un'Goro Crater
+	[1452] = { min = 55, max = 60 }  -- Winterspring
+}
+
 -- Callbacks
 ----------------------------------------------------
 local GetFormattedCoordinates = function(x, y)
@@ -51,7 +98,82 @@ local GetFormattedCoordinates = function(x, y)
 	       string_gsub(string_format("%.1f", y*100), "%.(.+)", "|cff888888.%1|r")
 end 
 
-local OnUpdate = function(self, elapsed) 
+-- OnUpdate Handlers
+----------------------------------------------------
+local AreaLabel_OnUpdate = function(self)
+	self:ClearLabel(MAP_AREA_LABEL_TYPE.AREA_NAME)
+	local map = self.dataProvider:GetMap()
+	if map:IsCanvasMouseFocus() then
+		local name, description
+		local mapID = map:GetMapID()
+		local normalizedCursorX, normalizedCursorY = map:GetNormalizedCursorPosition()
+		local positionMapInfo = C_Map.GetMapInfoAtPosition(mapID, normalizedCursorX, normalizedCursorY)		
+		if positionMapInfo and positionMapInfo.mapID ~= mapID then
+			name = positionMapInfo.name
+
+			local playerMinLevel, playerMaxLevel 
+			if zoneData[positionMapInfo.mapID] then
+				playerMinLevel = zoneData[positionMapInfo.mapID].min
+				playerMaxLevel = zoneData[positionMapInfo.mapID].max
+			end
+
+			if name and playerMinLevel and playerMaxLevel and playerMinLevel > 0 and playerMaxLevel > 0 then
+				local playerLevel = UnitLevel("player")
+				local color
+				if playerLevel < playerMinLevel then
+					color = GetQuestDifficultyColor(playerMinLevel)
+				elseif playerLevel > playerMaxLevel then
+					--subtract 2 from the maxLevel so zones entirely below the player's level won't be yellow
+					color = GetQuestDifficultyColor(playerMaxLevel - 2)
+				else
+					color = QuestDifficultyColors["difficult"]
+				end
+				color = ConvertRGBtoColorString(color)
+				if playerMinLevel ~= playerMaxLevel then
+					name = name..color.." ("..playerMinLevel.."-"..playerMaxLevel..")"..FONT_COLOR_CODE_CLOSE
+				else
+					name = name..color.." ("..playerMaxLevel..")"..FONT_COLOR_CODE_CLOSE
+				end
+			end
+		else
+			name = MapUtil.FindBestAreaNameAtMouse(mapID, normalizedCursorX, normalizedCursorY)
+		end
+		if name then
+			self:SetLabel(MAP_AREA_LABEL_TYPE.AREA_NAME, name, description)
+		end
+	end
+	self:EvaluateLabels()
+end
+
+local Coordinates_OnUpdate = function(self, elapsed)
+	self.elapsed = self.elapsed + elapsed
+	if (self.elapsed < .05) then 
+		return 
+	end 
+	local pX, pY, cX, cY
+	local mapID = GetBestMapForUnit("player")
+	if (mapID) then 
+		local mapPosObject = GetPlayerMapPosition(mapID, "player")
+		if (mapPosObject) then 
+			pX, pY = mapPosObject:GetXY()
+		end 
+	end 
+	if (self.Canvas:IsMouseOver(0, 0, 0, 0)) then 
+		cX, cY = self.Canvas:GetNormalizedCursorPosition()
+	end
+	if (pX and pY) then 
+		self.PlayerCoordinates:SetFormattedText("|cffffd200%1$s|r %2$s %3$s", PLAYER, GetFormattedCoordinates(pX, pY))
+	else 
+		self.PlayerCoordinates:SetText("")
+	end 
+	if (cX and cY) then 
+		self.CursorCoordinates:SetFormattedText("%2$s %3$s |cffffd200%1$s|r", MOUSE_LABEL, GetFormattedCoordinates(cX, cY))
+	else
+		self.CursorCoordinates:SetText("")
+	end 
+end
+
+local FadeTimer_OnUpdate = function(self, elapsed) 
 	self.elapsed = self.elapsed + elapsed
 	if (self.elapsed < self.throttle) then
 		return 
@@ -80,7 +202,7 @@ local OnUpdate = function(self, elapsed)
 	end 
 end
 
--- Addon
+-- Addon Init & Events
 ----------------------------------------------------
 Private.OnEvent = function(self, event, ...)
 	if (event == "ADDON_LOADED") then 
@@ -96,13 +218,13 @@ Private.OnEvent = function(self, event, ...)
 		self.FadeTimer.alpha = self.Canvas:GetAlpha()
 		self.FadeTimer.fadeDirection = "OUT"
 		self.FadeTimer.isFading = true
-		self.FadeTimer:SetScript("OnUpdate", OnUpdate)
+		self.FadeTimer:SetScript("OnUpdate", FadeTimer_OnUpdate)
 
 	elseif (event == "PLAYER_STOPPED_MOVING") or (event == "PLAYER_ENTERING_WORLD") then 
 		self.FadeTimer.alpha = self.Canvas:GetAlpha()
 		self.FadeTimer.fadeDirection = "IN"
 		self.FadeTimer.isFading = true
-		self.FadeTimer:SetScript("OnUpdate", OnUpdate)
+		self.FadeTimer:SetScript("OnUpdate", FadeTimer_OnUpdate)
 	end
 end
 
@@ -127,8 +249,11 @@ Private.OnEnable = function(self)
 	self:SetUpContainer()
 	self:SetUpFading()
 	self:SetUpCoordinates()
+	self:SetUpZoneLevels()
 end 
 
+-- Addon API
+----------------------------------------------------
 Private.SetUpCanvas = function(self)
 	if (self.limitedMode) then 
 		return 
@@ -186,37 +311,17 @@ Private.SetUpCoordinates = function(self)
 	CoordinateTimer.elapsed = 0
 	CoordinateTimer.Canvas = self.Canvas
 	CoordinateTimer.Coordinates = Coordinates
-	CoordinateTimer:SetScript("OnUpdate", function(self, elapsed)
-		self.elapsed = self.elapsed + elapsed
-		if (self.elapsed < .05) then 
-			return 
-		end 
-		local pX, pY, cX, cY
-		local mapID = GetBestMapForUnit("player")
-		if (mapID) then 
-			local mapPosObject = GetPlayerMapPosition(mapID, "player")
-			if (mapPosObject) then 
-				pX, pY = mapPosObject:GetXY()
-			end 
-		end 
-		if (self.Canvas:IsMouseOver(0, 0, 0, 0)) then 
-			cX, cY = self.Canvas:GetNormalizedCursorPosition()
-		end
-		if (pX and pY) then 
-			PlayerCoordinates:SetFormattedText("|cffffd200%1$s|r %2$s %3$s", PLAYER, GetFormattedCoordinates(pX, pY))
-		else 
-			PlayerCoordinates:SetText("")
-		end 
-		if (cX and cY) then 
-			CursorCoordinates:SetFormattedText("%2$s %3$s |cffffd200%1$s|r", MOUSE_LABEL, GetFormattedCoordinates(cX, cY))
-		else
-			CursorCoordinates:SetText("")
-		end 
-	end)
+	CoordinateTimer.PlayerCoordinates = PlayerCoordinates
+	CoordinateTimer.CursorCoordinates = CursorCoordinates
+	CoordinateTimer:SetScript("OnUpdate", Coordinates_OnUpdate)
 end
 
 Private.SetUpZoneLevels = function(self)
-
+	for provider in next, WorldMapFrame.dataProviders do
+		if provider.setAreaLabelCallback then
+			provider.Label:SetScript("OnUpdate", AreaLabel_OnUpdate)
+		end
+	end
 end
 
 -- Retrieve addon info the way we prefer it
