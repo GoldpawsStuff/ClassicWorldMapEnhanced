@@ -170,10 +170,11 @@ Private.SetUpFading = function(self)
 end
 
 Private.SetUpCoordinates = function(self)
-	local Coordinates = self.Container.Child:CreateFontString()
+	local Coordinates = self.Container:CreateFontString()
 	Coordinates:SetFontObject(Game13Font_o1)
 	Coordinates:SetAlpha(.85)
-	Coordinates:SetPoint("BOTTOM", 0, 20)
+	Coordinates:SetPoint("TOP", self.Container, "BOTTOM", 0, -7)
+	Coordinates:SetDrawLayer("OVERLAY")
 
 	local CoordinateTimer = CreateFrame("Frame", nil, self.Canvas)
 	CoordinateTimer.elapsed = 0
@@ -205,6 +206,10 @@ Private.SetUpCoordinates = function(self)
 			self.Coordinates:SetText("")
 		end 
 	end)
+end
+
+Private.SetUpZoneLevels = function(self)
+
 end
 
 -- Retrieve addon info the way we prefer it
