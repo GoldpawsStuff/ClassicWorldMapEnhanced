@@ -170,11 +170,17 @@ Private.SetUpFading = function(self)
 end
 
 Private.SetUpCoordinates = function(self)
-	local Coordinates = self.Container:CreateFontString()
-	Coordinates:SetFontObject(Game13Font_o1)
-	Coordinates:SetAlpha(.85)
-	Coordinates:SetPoint("TOP", self.Container, "BOTTOM", 0, -7)
-	Coordinates:SetDrawLayer("OVERLAY")
+	local PlayerCoordinates = self.Container:CreateFontString()
+	PlayerCoordinates:SetFontObject(Game12Font_o1)
+	PlayerCoordinates:SetPoint("TOPLEFT", self.Container, "BOTTOMLEFT", 10, -7)
+	PlayerCoordinates:SetDrawLayer("OVERLAY")
+	PlayerCoordinates:SetJustifyH("LEFT")
+
+	local CursorCoordinates = self.Container:CreateFontString()
+	CursorCoordinates:SetFontObject(Game12Font_o1)
+	CursorCoordinates:SetPoint("TOPRIGHT", self.Container, "BOTTOMRIGHT", -10, -7)
+	CursorCoordinates:SetDrawLayer("OVERLAY")
+	CursorCoordinates:SetJustifyH("RIGHT")
 
 	local CoordinateTimer = CreateFrame("Frame", nil, self.Canvas)
 	CoordinateTimer.elapsed = 0
@@ -185,25 +191,26 @@ Private.SetUpCoordinates = function(self)
 		if (self.elapsed < .05) then 
 			return 
 		end 
-
-		local x, y, pos
-		if (self.Canvas:IsMouseOver(0, 0, 0, 0)) then 
-			pos = MOUSE_LABEL
-			x, y = self.Canvas:GetNormalizedCursorPosition()
-		else
-			local mapID = GetBestMapForUnit("player")
-			if mapID then 
-				pos = PLAYER
-				local mapPosObject = GetPlayerMapPosition(mapID, "player")
-				if mapPosObject then 
-					x, y = mapPosObject:GetXY()
-				end 
+		local pX, pY, cX, cY
+		local mapID = GetBestMapForUnit("player")
+		if (mapID) then 
+			local mapPosObject = GetPlayerMapPosition(mapID, "player")
+			if (mapPosObject) then 
+				pX, pY = mapPosObject:GetXY()
 			end 
 		end 
-		if (x and y and pos) then 
-			self.Coordinates:SetFormattedText("%s %s", GetFormattedCoordinates(x, y))
+		if (self.Canvas:IsMouseOver(0, 0, 0, 0)) then 
+			cX, cY = self.Canvas:GetNormalizedCursorPosition()
+		end
+		if (pX and pY) then 
+			PlayerCoordinates:SetFormattedText("|cffffd200%1$s|r %2$s %3$s", PLAYER, GetFormattedCoordinates(pX, pY))
 		else 
-			self.Coordinates:SetText("")
+			PlayerCoordinates:SetText("")
+		end 
+		if (cX and cY) then 
+			CursorCoordinates:SetFormattedText("%2$s %3$s |cffffd200%1$s|r", MOUSE_LABEL, GetFormattedCoordinates(cX, cY))
+		else
+			CursorCoordinates:SetText("")
 		end 
 	end)
 end
