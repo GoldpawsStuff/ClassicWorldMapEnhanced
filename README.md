@@ -3,7 +3,7 @@
 Simple addon for WoW Classic that makes the WorldMap a little easier to work with, and adds some quality of life features. It currently has no user configurable settings. 
 
 ## **Features:**  
-- Shrinks the world mapp down to a manageable size.
+- Shrinks the world map down to a manageable size.
 - Prevents the world map from blocking out the world visually. 
 - Prevents the world map from blocking user movement and input when map is visible. 
 - Makes the map slightly transparent when the player is moving, to easier spot mobs and hostile players. 
