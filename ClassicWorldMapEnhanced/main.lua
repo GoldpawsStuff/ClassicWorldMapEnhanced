@@ -5,9 +5,12 @@ Private:SetScript("OnEvent", function(self, event, ...) self:OnEvent(event, ...)
 Private:RegisterEvent("ADDON_LOADED")
 
 -- Lua API
+local math_floor = math.floor
+local select = select
 local string_format = string.format
 local string_gsub = string.gsub
 local string_lower = string.lower
+local unpack = unpack
 
 -- WoW API
 local GetAddOnEnableState = GetAddOnEnableState
@@ -15,9 +18,67 @@ local GetAddOnInfo = GetAddOnInfo
 local GetBestMapForUnit = C_Map.GetBestMapForUnit
 local GetNumAddOns = GetNumAddOns
 local GetPlayerMapPosition = C_Map.GetPlayerMapPosition
+local GetQuestGreenRange = GetQuestGreenRange
 local IsAddOnLoaded = IsAddOnLoaded
 local Saturate = Saturate
+local UnitLevel = UnitLevel
 local UnitName = UnitName
+
+-- Utility
+----------------------------------------------------
+-- Convert a Blizzard Color or RGB value set 
+-- into our own custom color table format. 
+local createColor = function(...)
+	local tbl
+	if (select("#", ...) == 1) then
+		local old = ...
+		if (old.r) then 
+			tbl = {}
+			tbl[1] = old.r or 1
+			tbl[2] = old.g or 1
+			tbl[3] = old.b or 1
+		else
+			tbl = { unpack(old) }
+		end
+	else
+		tbl = { ... }
+	end
+	if (#tbl == 3) then
+		tbl.colorCode = ("|cff%02x%02x%02x"):format(math_floor(tbl[1]*255), math_floor(tbl[2]*255), math_floor(tbl[3]*255))
+	end
+	return tbl
+end
+
+-- Create our color table
+local Colors = {
+	normal = createColor(229/255, 178/255, 38/255),
+	highlight = createColor(250/255, 250/255, 250/255),
+	title = createColor(255/255, 234/255, 137/255),
+	offwhite = createColor(196/255, 196/255, 196/255),
+	quest = {
+		red = createColor(204/255, 26/255, 26/255),
+		orange = createColor(255/255, 128/255, 64/255),
+		yellow = createColor(229/255, 178/255, 38/255),
+		green = createColor(89/255, 201/255, 89/255),
+		gray = createColor(120/255, 120/255, 120/255)
+	}
+}
+
+-- Returns the correct difficulty color compared to the player
+local GetQuestDifficultyColor = function(level, playerLevel)
+	level = level - (playerLevel or UnitLevel("player"))
+	if (level > 4) then
+		return Colors.quest.red
+	elseif (level > 2) then
+		return Colors.quest.orange
+	elseif (level >= -2) then
+		return Colors.quest.yellow
+	elseif (level >= -GetQuestGreenRange()) then
+		return Colors.quest.green
+	else
+		return Colors.quest.gray
+	end
+end
 
 -- ScrollContainer API 
 ----------------------------------------------------
@@ -121,18 +182,18 @@ local AreaLabel_OnUpdate = function(self)
 				local playerLevel = UnitLevel("player")
 				local color
 				if playerLevel < playerMinLevel then
-					color = GetQuestDifficultyColor(playerMinLevel)
+					color = GetQuestDifficultyColor(playerMinLevel, playerLevel)
 				elseif playerLevel > playerMaxLevel then
 					--subtract 2 from the maxLevel so zones entirely below the player's level won't be yellow
-					color = GetQuestDifficultyColor(playerMaxLevel - 2)
+					color = GetQuestDifficultyColor(playerMaxLevel - 2, playerLevel)
 				else
-					color = QuestDifficultyColors["difficult"]
+					color = Colors.quest.yellow
 				end
-				color = ConvertRGBtoColorString(color)
+				--color = ConvertRGBtoColorString(color)
 				if playerMinLevel ~= playerMaxLevel then
-					name = name..color.." ("..playerMinLevel.."-"..playerMaxLevel..")"..FONT_COLOR_CODE_CLOSE
+					name = name..color.colorCode.." ("..playerMinLevel.."-"..playerMaxLevel..")"..FONT_COLOR_CODE_CLOSE
 				else
-					name = name..color.." ("..playerMaxLevel..")"..FONT_COLOR_CODE_CLOSE
+					name = name..color.colorCode.." ("..playerMaxLevel..")"..FONT_COLOR_CODE_CLOSE
 				end
 			end
 		else
@@ -162,12 +223,12 @@ local Coordinates_OnUpdate = function(self, elapsed)
 		cX, cY = self.Canvas:GetNormalizedCursorPosition()
 	end
 	if (pX and pY) then 
-		self.PlayerCoordinates:SetFormattedText("|cffffd200%1$s|r %2$s %3$s", PLAYER, GetFormattedCoordinates(pX, pY))
+		self.PlayerCoordinates:SetFormattedText(Colors.title.colorCode.."%1$s|r %2$s %3$s", PLAYER, GetFormattedCoordinates(pX, pY))
 	else 
 		self.PlayerCoordinates:SetText("")
 	end 
 	if (cX and cY) then 
-		self.CursorCoordinates:SetFormattedText("%2$s %3$s |cffffd200%1$s|r", MOUSE_LABEL, GetFormattedCoordinates(cX, cY))
+		self.CursorCoordinates:SetFormattedText("%2$s %3$s "..Colors.title.colorCode.."%1$s|r", MOUSE_LABEL, GetFormattedCoordinates(cX, cY))
 	else
 		self.CursorCoordinates:SetText("")
 	end 
