@@ -3,7 +3,7 @@
 ## Title: Enhanced WorldMap
 ## Author: Lars Norberg
 ## Notes: Makes the WorldMap more managable.|cff888888By Lars Norberg.|r|n|n|cff4488ffPayPal|r|cffffffff:|r |n|cffffffffwww.paypal.me/AzeriteUI|r|n|n|cff4488ffPatreon|r|cffffffff:|r |n|cffffffffwww.patreon.com/AzeriteUI|r
-## Version: 1.0-Alpha
+## Version: 1.0-Release
 ## DefaultState: Enabled
 ## SavedVariables: ClassicInviteSpamBlocker_DB
 ## X-Discord: https://discord.gg/MUSfWXd
