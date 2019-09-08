@@ -1,6 +1,6 @@
 [ ![Become a Patreon](http://azeriteui.com/img/social-media-buttons-patreon-small.jpg) ](https://www.patreon.com/AzeriteUI) 
 
-Simple addon for WoW Classic that makes the WorldMap a little easier to work with, and adds some quality of life features. It currently has no user configurable settings. 
+Simple addon for WoW Classic that makes the WorldMap a little easier to work with, and adds some quality of life features. It has no user configurable settings, and probably never will have. Simple, subtle, super effective and works straight out of the box.
 
 ## **Features:**  
 - Shrinks the world map down to a manageable size.
@@ -9,6 +9,7 @@ Simple addon for WoW Classic that makes the WorldMap a little easier to work wit
 - Makes the map slightly transparent when the player is moving, to easier spot mobs and hostile players. 
 - Shows player- and mouse cursor coordinates. 
 - Shows zone quest levels.
+- Shows zone factions.
 
 ## **Pledge to our work:**  
 * Patreon: [www.patreon.com/AzeriteUI](https://www.patreon.com/azeriteui)  
