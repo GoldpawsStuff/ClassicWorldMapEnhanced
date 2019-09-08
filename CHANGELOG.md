@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. Be aware th
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.3-Release] 2019-09-08
+### Added
+- Added reaction colored zone faction names for zones owned by either of the factions. Red means it's a hostile zone, green means it's a friendly zone.
+
 ## [1.0.2-Release] 2019-09-05
 ### Fixed
 - CurseForge should now look in the correct repository, and not give you AzeriteUI for WoW Classic instead. SORRY!!!
