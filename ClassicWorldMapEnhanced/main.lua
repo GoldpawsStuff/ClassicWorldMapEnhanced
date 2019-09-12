@@ -116,7 +116,55 @@ local Container = {
 }
 
 -- Zone Levels & Factions
+-- Using: https://wow.gamepedia.com/Zones_by_level_(Classic)
 local zoneData = {
+
+	-- Eastern Kingdoms
+	[1416] = { min = 30, max = 40 }, 						-- Alterac Mountains
+	[1417] = { min = 30, max = 40 }, 						-- Arathi Highlands
+	[1418] = { min = 35, max = 45 }, 						-- Badlands
+	[1419] = { min = 45, max = 55 }, 						-- Blasted Lands
+	[1428] = { min = 50, max = 58 }, 						-- Burning Steppes
+	[1430] = { min = 55, max = 60 }, 						-- Deadwind Pass
+	[1426] = { min =  1, max = 10, faction = "Alliance" }, 	-- Dun Morogh
+	[1431] = { min = 18, max = 30 }, 						-- Duskwood
+	[1423] = { min = 53, max = 60 }, 						-- Eastern Plaguelands
+	[1429] = { min =  1, max = 10, faction = "Alliance" }, 	-- Elwynn Forest
+	[1424] = { min = 20, max = 35 }, 						-- Hillsbrad Foothills
+	[1432] = { min = 10, max = 20, faction = "Alliance" }, 	-- Loch Modan
+	[1433] = { min = 15, max = 25 }, 						-- Redridge Mountains
+	[1427] = { min = 45, max = 50 }, 						-- Searing Gorge
+	[1421] = { min = 10, max = 20, faction = "Horde" }, 	-- Silverpine Forest
+	[1434] = { min = 30, max = 45 }, 						-- Stranglethorn Vale
+	[1435] = { min = 35, max = 45 }, 						-- Swamp of Sorrows
+	[1425] = { min = 40, max = 50 }, 						-- The Hinterlands
+	[1420] = { min =  1, max = 10, faction = "Horde" }, 	-- Tirisfal Glades
+	[1436] = { min = 10, max = 20, faction = "Alliance" }, 	-- Westfall
+	[1422] = { min = 51, max = 58 }, 						-- Western Plaguelands
+	[1437] = { min = 20, max = 30 }, 						-- Wetlands
+
+	-- Kalimdor
+	[1440] = { min = 18, max = 30 }, 						-- Ashenvale
+	[1447] = { min = 45, max = 55 }, 						-- Azshara
+	[1439] = { min = 10, max = 20, faction = "Alliance" }, 	-- Darkshore
+	[1443] = { min = 30, max = 40 }, 						-- Desolace
+	[1411] = { min =  1, max = 10, faction = "Horde" }, 	-- Durotar
+	[1445] = { min = 35, max = 45 }, 						-- Dustwallow Marsh
+	[1448] = { min = 48, max = 55 }, 						-- Felwood
+	[1444] = { min = 40, max = 50 }, 						-- Feralas
+	[1450] = { min = 55, max = 60 }, 						-- Moonglade
+	[1412] = { min =  1, max = 10, faction = "Horde" }, 	-- Mulgore
+	[1451] = { min = 55, max = 60 }, 						-- Silithus
+	[1442] = { min = 15, max = 27 }, 						-- Stonetalon Mountains
+	[1446] = { min = 40, max = 50 }, 						-- Tanaris
+	[1438] = { min =  1, max = 10, faction = "Alliance" }, 	-- Teldrassil
+	[1413] = { min = 10, max = 25, faction = "Horde" }, 	-- The Barrens
+	[1441] = { min = 24, max = 35 }, 						-- Thousand Needles
+	[1449] = { min = 48, max = 55 }, 						-- Un'Goro Crater
+	[1452] = { min = 55, max = 60 }  						-- Winterspring
+}
+
+local zoneDataOld = {
 
 	-- Eastern Kingdoms
 	[1416] = { min = 27, max = 39 }, 						-- Alterac Mountains
