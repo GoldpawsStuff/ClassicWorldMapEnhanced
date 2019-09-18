@@ -978,8 +978,9 @@ Private.OnEvent = function(self, event, ...)
 end
 
 Private.OnInit = function(self)
-	self.limitedMode = Private:IsAddOnEnabled("AzeriteUI_Classic")
-
+	if Private:IsAddOnEnabled("Leatrix_Maps") then 
+		return 
+	end
 	-- Check whether or not the addon has been loaded, 
 	-- and if its addon's ADDON_LOADED event has fired.
 	local loaded, finished = IsAddOnLoaded("Blizzard_WorldMap")
@@ -991,6 +992,10 @@ Private.OnInit = function(self)
 end
 
 Private.OnEnable = function(self)
+	if Private:IsAddOnEnabled("Leatrix_Maps") then 
+		return 
+	end
+
 	self.Canvas = WorldMapFrame
 	self.Container = WorldMapFrame.ScrollContainer
 
@@ -1004,9 +1009,6 @@ end
 -- Addon API
 ----------------------------------------------------
 Private.SetUpCanvas = function(self)
-	if (self.limitedMode) then 
-		return 
-	end 
 	-- Bring the map down to size.
 	self.Canvas.BlackoutFrame:Hide()
 	self.Canvas:SetIgnoreParentScale(false)
@@ -1014,9 +1016,6 @@ Private.SetUpCanvas = function(self)
 end
 
 Private.SetUpContainer = function(self)
-	if (self.limitedMode) then 
-		return 
-	end 
 	-- Add our own API to the WorldMap.
 	-- This is needed for the mouseover to align. 
 	for name,method in pairs(Container) do 
@@ -1025,10 +1024,6 @@ Private.SetUpContainer = function(self)
 end
 
 Private.SetUpFading = function(self)
-	if (self.limitedMode) then 
-		return 
-	end 
-
 	self.FadeTimer = CreateFrame("Frame")
 	self.FadeTimer.elapsed = 0
 	self.FadeTimer.stopAlpha = .9
