@@ -10,6 +10,8 @@ Simple addon for WoW Classic that makes the WorldMap a little easier to work wit
 - Shows player- and mouse cursor coordinates. 
 - Shows zone quest levels.
 - Shows zone factions.
+- Allows mouse wheel zooming. 
+- Disables Fog of War, giving you the ability to see the unexplored areas of the map. _(optional)_
 
 ## **Pledge to our work:**  
 * Patreon: [www.patreon.com/AzeriteUI](https://www.patreon.com/azeriteui)  
