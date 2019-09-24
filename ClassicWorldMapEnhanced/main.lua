@@ -5,24 +5,66 @@ Private:SetScript("OnEvent", function(self, event, ...) self:OnEvent(event, ...)
 Private:RegisterEvent("ADDON_LOADED")
 
 -- Lua API
+local ipairs = ipairs
+local math_ceil = math.ceil
 local math_floor = math.floor
+local math_mod = math.fmod
 local select = select
 local string_format = string.format
 local string_gsub = string.gsub
 local string_lower = string.lower
+local string_split = string.split
+local table_insert = table.insert
+local table_wipe = table.wipe
+local tonumber = tonumber
 local unpack = unpack
 
 -- WoW API
 local GetAddOnEnableState = GetAddOnEnableState
 local GetAddOnInfo = GetAddOnInfo 
 local GetBestMapForUnit = C_Map.GetBestMapForUnit
+local GetExploredMapTextures = C_MapExplorationInfo.GetExploredMapTextures
+local GetMapArtID = C_Map.GetMapArtID
+local GetMapArtLayers = C_Map.GetMapArtLayers
 local GetNumAddOns = GetNumAddOns
 local GetPlayerMapPosition = C_Map.GetPlayerMapPosition
 local GetQuestGreenRange = GetQuestGreenRange
 local IsAddOnLoaded = IsAddOnLoaded
 local Saturate = Saturate
+local TexturePool_HideAndClearAnchors = TexturePool_HideAndClearAnchors
 local UnitLevel = UnitLevel
 local UnitName = UnitName
+
+-- Texture caches for map exploration reveal
+local overlayTextureCache, tileExists = {}, {}
+
+-- Default settings
+ClassicWorldMapEnhanced_DB = {
+	revealUnexploredAreas = true
+}
+
+-- Simplest and hackiest locale system to date. 
+local gameLocale = GetLocale()
+local L = (function(tbl) 
+	local L = tbl[gameLocale] or tbl.enUS
+	for i in pairs(L) do 
+		if (L[i] == true) then 
+			L[i] = i
+		end
+	end 
+	if (gameLocale ~= enUS) then 
+		for i in pairs(tbl.enUS) do 
+			if (not L[i]) then 
+				L[i] = i
+			end
+		end
+	end
+	return L
+end)({ 
+	enUS = {
+		["Fog of War"] = true
+	}
+})
 
 -- Utility
 ----------------------------------------------------
@@ -92,9 +134,8 @@ end
 -- ScrollContainer API 
 ----------------------------------------------------
 local Container = {
-
 	GetCanvasScale = function(self)
-		return self:GetScale()
+		return self.currentScale or self.targetScale or self:GetScale() or 1
 	end,
 	GetCursorPosition = function(self)
 		local currentX, currentY = GetCursorPosition()
@@ -112,6 +153,57 @@ local Container = {
 	NormalizeUIPosition = function(self, x, y)
 		return Saturate(self:NormalizeHorizontalSize(x / self:GetCanvasScale() - self.Child:GetLeft())),
 		       Saturate(self:NormalizeVerticalSize(self.Child:GetTop() - y / self:GetCanvasScale()))
+	end,
+	OnMouseWheel = function(self, delta)
+		if (self.mouseWheelZoomMode == MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_NONE) then
+			return
+		end
+
+		if (self:ShouldAdjustTargetPanOnMouseWheel(delta)) then
+			local cursorX, cursorY = self:GetCursorPosition()
+			local normalizedCursorX = self:NormalizeHorizontalSize(cursorX / self:GetCanvasScale() - self.Child:GetLeft())
+			local normalizedCursorY = self:NormalizeVerticalSize(self.Child:GetTop() - cursorY / self:GetCanvasScale())
+
+			if (not self:ShouldZoomInstantly()) then
+				local nextZoomOutScale, nextZoomInScale = self:GetCurrentZoomRange()
+				local minX, maxX, minY, maxY = self:CalculateScrollExtentsAtScale(nextZoomInScale)
+				normalizedCursorX, normalizedCursorY = Clamp(normalizedCursorX, minX, maxX), Clamp(normalizedCursorY, minY, maxY)
+			end
+
+			self:SetPanTarget(normalizedCursorX, normalizedCursorY)
+		end
+
+		if (self.mouseWheelZoomMode == MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_SMOOTH) then
+			self:SetZoomTarget(self:GetCanvasScale() + self.zoomAmountPerMouseWheelDelta * delta)
+
+		elseif (self.mouseWheelZoomMode == MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_FULL) then
+			if (delta > 0) then
+				self:ZoomIn()
+			else
+				self:ZoomOut()
+			end
+		end
+	end,
+	ZoomIn = function(self)
+		local nextZoomOutScale, nextZoomInScale = self:GetCurrentZoomRange()
+		if (nextZoomInScale > self:GetCanvasScale()) then
+			if self:ShouldZoomInstantly() then
+				self:InstantPanAndZoom(nextZoomInScale, self.targetScrollX, self.targetScrollY)
+			else
+				self:SetZoomTarget(nextZoomInScale)
+			end
+		end
+	end,
+	ZoomOut = function(self)
+		local nextZoomOutScale, nextZoomInScale = self:GetCurrentZoomRange()
+		if (nextZoomOutScale < self:GetCanvasScale()) then
+			if self:ShouldZoomInstantly() then
+				self:InstantPanAndZoom(nextZoomOutScale, self.targetScrollX, self.targetScrollY)
+			else
+				self:SetZoomTarget(nextZoomOutScale)
+				self:SetPanTarget(.5, .5)
+			end
+		end
 	end
 }
 
@@ -159,53 +251,6 @@ local zoneData = {
 	[1446] = { min = 40, max = 50 }, 						-- Tanaris
 	[1438] = { min =  1, max = 10, faction = "Alliance" }, 	-- Teldrassil
 	[1413] = { min = 10, max = 25, faction = "Horde" }, 	-- The Barrens
-	[1441] = { min = 24, max = 35 }, 						-- Thousand Needles
-	[1449] = { min = 48, max = 55 }, 						-- Un'Goro Crater
-	[1452] = { min = 55, max = 60 }  						-- Winterspring
-}
-
-local zoneDataOld = {
-
-	-- Eastern Kingdoms
-	[1416] = { min = 27, max = 39 }, 						-- Alterac Mountains
-	[1417] = { min = 30, max = 40 }, 						-- Arathi Highlands
-	[1418] = { min = 36, max = 45 }, 						-- Badlands
-	[1419] = { min = 46, max = 63 }, 						-- Blasted Lands
-	[1428] = { min = 50, max = 59 }, 						-- Burning Steppes
-	[1430] = { min = 50, max = 60 }, 						-- Deadwind Pass
-	[1426] = { min =  1, max = 12, faction = "Alliance" }, 	-- Dun Morogh
-	[1431] = { min = 10, max = 30 }, 						-- Duskwood
-	[1423] = { min = 54, max = 59 }, 						-- Eastern Plaguelands
-	[1429] = { min =  1, max = 10, faction = "Alliance" }, 	-- Elwynn Forest
-	[1448] = { min = 47, max = 54 }, 						-- Felwood
-	[1424] = { min = 20, max = 31 }, 						-- Hillsbrad Foothills
-	[1432] = { min = 10, max = 18, faction = "Alliance" }, 	-- Loch Modan
-	[1433] = { min = 15, max = 25 }, 						-- Redridge Mountains
-	[1427] = { min = 43, max = 56 }, 						-- Searing Gorge
-	[1421] = { min = 10, max = 20, faction = "Horde" }, 	-- Silverpine Forest
-	[1434] = { min = 30, max = 50 }, 						-- Stranglethorn Vale
-	[1435] = { min = 36, max = 43 }, 						-- Swamp of Sorrows
-	[1425] = { min = 41, max = 49 }, 						-- The Hinterlands
-	[1420] = { min =  1, max = 12, faction = "Horde" }, 	-- Tirisfal Glades
-	[1436] = { min =  9, max = 18, faction = "Alliance" }, 	-- Westfall
-	[1422] = { min = 46, max = 57 }, 						-- Western Plaguelands
-	[1437] = { min = 20, max = 30 }, 						-- Wetlands
-
-	-- Kalimdor
-	[1440] = { min = 19, max = 30 }, 						-- Ashenvale
-	[1447] = { min = 42, max = 55 }, 						-- Azshara
-	[1439] = { min = 11, max = 19, faction = "Alliance" }, 	-- Darkshore
-	[1443] = { min = 30, max = 39 }, 						-- Desolace
-	[1411] = { min =  1, max = 10, faction = "Horde" }, 	-- Durotar
-	[1445] = { min = 36, max = 61 }, 						-- Dustwallow Marsh
-	[1444] = { min = 41, max = 60 }, 						-- Feralas
-	[1450] = { min = 15, max = 15 }, 						-- Moonglade
-	[1412] = { min =  1, max = 10, faction = "Horde" }, 	-- Mulgore
-	[1451] = { min = 55, max = 59 }, 						-- Silithus
-	[1442] = { min = 15, max = 25 }, 						-- Stonetalon Mountains
-	[1446] = { min = 40, max = 50 }, 						-- Tanaris
-	[1438] = { min =  1, max = 11, faction = "Alliance" }, 	-- Teldrassil
-	[1413] = { min = 10, max = 33, faction = "Horde" }, 	-- The Barrens
 	[1441] = { min = 24, max = 35 }, 						-- Thousand Needles
 	[1449] = { min = 48, max = 55 }, 						-- Un'Goro Crater
 	[1452] = { min = 55, max = 60 }  						-- Winterspring
@@ -833,7 +878,104 @@ local GetFormattedCoordinates = function(x, y)
 	       string_gsub(string_format("%.1f", y*100), "%.(.+)", "|cff888888.%1|r")
 end 
 
-local MapExplorationPin_RefreshOverlays = function(pin, fullUpdate)
+local ResetVertexColor = function(pool, texture)
+	texture:SetVertexColor(1, 1, 1)
+	texture:SetAlpha(1)
+	return TexturePool_HideAndClearAnchors(pool, texture)
+end
+
+local RefreshOverlays = function(pin, fullUpdate)
+	table_wipe(overlayTextureCache)
+	table_wipe(tileExists)
+
+	local mapID = WorldMapFrame.mapID
+	if (not mapID) then
+		return
+	end
+
+	local artID = GetMapArtID(mapID)
+	if ((not artID) or (not zoneReveal[artID])) then
+		return
+	end
+
+	local layers = GetMapArtLayers(mapID)
+	local layerInfo = layers and layers[pin.layerIndex]
+	if (not layerInfo) then
+		return
+	end
+
+	local zoneMaps = zoneReveal[artID]
+	local exploredMapTextures = GetExploredMapTextures(mapID)
+	if (exploredMapTextures) then
+		for _,info in ipairs(exploredMapTextures) do
+			tileExists[info.textureWidth..":"..info.textureHeight..":"..info.offsetX..":"..info.offsetY] = true
+		end
+	end
+
+	pin.layerIndex = pin:GetMap():GetCanvasContainer():GetCurrentLayerIndex()
+
+	local TILE_SIZE_WIDTH = layerInfo.tileWidth
+	local TILE_SIZE_HEIGHT = layerInfo.tileHeight
+
+	-- Show textures if they are in database and have not been explored
+	for key, files in pairs(zoneMaps) do
+		if (not tileExists[key]) then
+			local width, height, offsetX, offsetY = string_split(":", key)
+			local fileDataIDs = { string_split(",", files) }
+			local numTexturesWide = math_ceil(width/TILE_SIZE_WIDTH)
+			local numTexturesTall = math_ceil(height/TILE_SIZE_HEIGHT)
+			local texturePixelWidth, textureFileWidth, texturePixelHeight, textureFileHeight
+			for j = 1, numTexturesTall do
+				if (j < numTexturesTall) then
+					texturePixelHeight = TILE_SIZE_HEIGHT
+					textureFileHeight = TILE_SIZE_HEIGHT
+				else
+					texturePixelHeight = math_mod(height, TILE_SIZE_HEIGHT)
+					if (texturePixelHeight == 0) then
+						texturePixelHeight = TILE_SIZE_HEIGHT
+					end
+					textureFileHeight = 16
+					while (textureFileHeight < texturePixelHeight) do
+						textureFileHeight = textureFileHeight * 2
+					end
+				end
+				for k = 1, numTexturesWide do
+					local texture = pin.overlayTexturePool:Acquire()
+					if (k < numTexturesWide) then
+						texturePixelWidth = TILE_SIZE_WIDTH
+						textureFileWidth = TILE_SIZE_WIDTH
+					else
+						texturePixelWidth = math_mod(width, TILE_SIZE_WIDTH)
+						if (texturePixelWidth == 0) then
+							texturePixelWidth = TILE_SIZE_WIDTH
+						end
+						textureFileWidth = 16
+						while (textureFileWidth < texturePixelWidth) do
+							textureFileWidth = textureFileWidth * 2
+						end
+					end
+
+					texture:SetSize(texturePixelWidth, texturePixelHeight)
+					texture:SetTexCoord(0, texturePixelWidth/textureFileWidth, 0, texturePixelHeight/textureFileHeight)
+					texture:SetPoint("TOPLEFT", offsetX + (TILE_SIZE_WIDTH * (k-1)), -(offsetY + (TILE_SIZE_HEIGHT * (j - 1))))
+					texture:SetTexture(tonumber(fileDataIDs[((j - 1) * numTexturesWide) + k]), nil, nil, "TRILINEAR")
+					texture:SetDrawLayer("ARTWORK", -1)
+
+					if (ClassicWorldMapEnhanced_DB.revealUnexploredAreas) then
+						texture:Show()
+						if fullUpdate then
+							pin.textureLoadGroup:AddTexture(texture)
+						end
+					else
+						texture:Hide()
+					end
+					texture:SetVertexColor(0.6, 0.6, 0.6)
+
+					table_insert(overlayTextureCache, texture)
+				end
+			end
+		end
+	end
 end
 
 -- OnUpdate Handlers
@@ -1004,6 +1146,8 @@ Private.OnEnable = function(self)
 	self:SetUpFading()
 	self:SetUpCoordinates()
 	self:SetUpZoneLevels()
+	self:SetUpMapReveal()
+
 end 
 
 -- Addon API
@@ -1012,6 +1156,9 @@ Private.SetUpCanvas = function(self)
 	-- Bring the map down to size.
 	self.Canvas.BlackoutFrame:Hide()
 	self.Canvas:SetIgnoreParentScale(false)
+	self.Canvas:SetFrameStrata("MEDIUM")
+	self.Canvas.BorderFrame:SetFrameStrata("MEDIUM")
+	self.Canvas.BorderFrame:SetFrameLevel(1)
 	self.Canvas:RefreshDetailLayers()
 end
 
@@ -1021,6 +1168,9 @@ Private.SetUpContainer = function(self)
 	for name,method in pairs(Container) do 
 		self.Container[name] = method
 	end 
+
+	-- Fix scroll zooming in classic
+	self.Container:SetScript("OnMouseWheel", self.Container.OnMouseWheel)
 end
 
 Private.SetUpFading = function(self)
@@ -1065,6 +1215,37 @@ Private.SetUpZoneLevels = function(self)
 		if provider.setAreaLabelCallback then
 			provider.Label:SetScript("OnUpdate", AreaLabel_OnUpdate)
 		end
+	end
+end
+
+Private.SetUpMapReveal = function(self)
+	local button = CreateFrame("CheckButton", nil, WorldMapFrame.BorderFrame, "OptionsCheckButtonTemplate")
+	button:SetPoint("TOPRIGHT", -260, 0)
+	button:SetSize(24, 24)
+
+	button.msg = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	button.msg:SetPoint("LEFT", 24, 0)
+	button.msg:SetText(L["Fog of War"])
+
+	button:SetPoint("TOPRIGHT", -(24 + 10 + button.msg:GetWidth()), 0)
+	button:SetHitRectInsets(0, 0 - button.msg:GetWidth(), 0, 0)
+	button:SetChecked(not ClassicWorldMapEnhanced_DB.revealUnexploredAreas)
+	button:SetScript("OnClick", function(self)
+		ClassicWorldMapEnhanced_DB.revealUnexploredAreas = not button:GetChecked()
+		Private:UpdateOverlayTextures()
+	end)
+
+	button:Show()
+
+	for pin in WorldMapFrame:EnumeratePinsByTemplate("MapExplorationPinTemplate") do
+		hooksecurefunc(pin, "RefreshOverlays", RefreshOverlays)
+		pin.overlayTexturePool.resetterFunc = ResetVertexColor
+	end
+end
+
+Private.UpdateOverlayTextures = function(self)
+	for i = 1, #overlayTextureCache do
+		overlayTextureCache[i]:SetShown(ClassicWorldMapEnhanced_DB.revealUnexploredAreas)
 	end
 end
 
