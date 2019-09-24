@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. Be aware th
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.6-Release] 2019-09-24
+### Added
+- Added the optional feature to disable Fog of War, thus revealing unexplored areas of the map. This feature is enabled by default. 
+- Enabled the use of the mouse wheel to zoom in and out. 
+
 ## [1.0.5-Release] 2019-09-18
 ### Changed
 - This addon won't interfere with Leatrix Maps anymore.  
