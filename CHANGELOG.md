@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. Be aware th
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.7-Release] 2019-10-08
+### Changed
+- Re-arranged the code a bit, improved the function names to be more descriptive of what they do, and added better commenting for anybody looking to disect the addon and learn from it. 
+- Updated ToC file links to reflect my current patreon and paypal, and removed redundant entries.
+
 ## [1.1.6-Release] 2019-09-24
 ### Added
 - Added the optional feature to disable Fog of War, thus revealing unexplored areas of the map. This feature is enabled by default. 

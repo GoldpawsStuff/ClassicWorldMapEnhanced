@@ -1,5 +1,9 @@
+-- Retrieve the folder name of this addon 
+-- as used by events fired upon addon loading.
 local ADDON = ...
 
+-- Create a frame and use this as both 
+-- the addon object and our event handler. 
 local Private = CreateFrame("Frame")
 Private:SetScript("OnEvent", function(self, event, ...) self:OnEvent(event, ...) end)
 Private:RegisterEvent("ADDON_LOADED")
@@ -38,20 +42,20 @@ local UnitName = UnitName
 -- Texture caches for map exploration reveal
 local overlayTextureCache, tileExists = {}, {}
 
--- Default settings
-ClassicWorldMapEnhanced_DB = {
-	revealUnexploredAreas = true
-}
-
--- Simplest and hackiest locale system to date. 
+-- Simplest and hackiest localization system to date. 
 local gameLocale = GetLocale()
 local L = (function(tbl) 
+	-- Retrieve the correct locale table
 	local L = tbl[gameLocale] or tbl.enUS
+	-- Replace any 'true' values with the key name
 	for i in pairs(L) do 
 		if (L[i] == true) then 
 			L[i] = i
 		end
 	end 
+	-- If this is a non-default locale, 
+	-- make sure any missing entries 
+	-- are copied from the enUS fallback.
 	if (gameLocale ~= enUS) then 
 		for i in pairs(tbl.enUS) do 
 			if (not L[i]) then 
@@ -61,10 +65,20 @@ local L = (function(tbl)
 	end
 	return L
 end)({ 
+	-- This is the default locale. 
+	-- Any other localed will use this one
+	-- as a fallback in cases where entries are missing.
 	enUS = {
 		["Fog of War"] = true
 	}
 })
+
+-- Default settings
+-- These will be overwritten by saved settings, 
+-- so don't edit anything here. 
+ClassicWorldMapEnhanced_DB = {
+	revealUnexploredAreas = true
+}
 
 -- Utility
 ----------------------------------------------------
@@ -75,21 +89,15 @@ local createColor = function(...)
 	if (select("#", ...) == 1) then
 		local old = ...
 		if (old.r) then 
-			tbl = {
-}
-			tbl[1] = old.r or 1
-			tbl[2] = old.g or 1
-			tbl[3] = old.b or 1
+			tbl = { old.r or 1, old.g or 1, old.b or 1 }
 		else
-			tbl = {
- unpack(old) }
+			tbl = { unpack(old) }
 		end
 	else
-		tbl = {
- ... }
+		tbl = { ... }
 	end
 	if (#tbl == 3) then
-		tbl.colorCode = ("|cff%02x%02x%02x"):format(math_floor(tbl[1]*255), math_floor(tbl[2]*255), math_floor(tbl[3]*255))
+		tbl.colorCode = string_format("|cff%02x%02x%02x", math_floor(tbl[1]*255), math_floor(tbl[2]*255), math_floor(tbl[3]*255))
 	end
 	return tbl
 end
@@ -114,22 +122,6 @@ local Colors = {
 		gray = createColor(120/255, 120/255, 120/255)
 	}
 }
-
--- Returns the correct difficulty color compared to the player
-local GetQuestDifficultyColor = function(level, playerLevel)
-	level = level - (playerLevel or UnitLevel("player"))
-	if (level > 4) then
-		return Colors.quest.red
-	elseif (level > 2) then
-		return Colors.quest.orange
-	elseif (level >= -2) then
-		return Colors.quest.yellow
-	elseif (level >= -GetQuestGreenRange()) then
-		return Colors.quest.green
-	else
-		return Colors.quest.gray
-	end
-end
 
 -- ScrollContainer API 
 ----------------------------------------------------
@@ -209,6 +201,7 @@ local Container = {
 
 -- Zone Levels & Factions
 -- Using: https://wow.gamepedia.com/Zones_by_level_(Classic)
+----------------------------------------------------
 local zoneData = {
 
 	-- Eastern Kingdoms
@@ -873,18 +866,37 @@ local zoneReveal = {
 
 -- Callbacks
 ----------------------------------------------------
+-- Returns coordinates as a nice string
 local GetFormattedCoordinates = function(x, y)
 	return string_gsub(string_format("%.1f", x*100), "%.(.+)", "|cff888888.%1|r"),
 	       string_gsub(string_format("%.1f", y*100), "%.(.+)", "|cff888888.%1|r")
 end 
 
-local ResetVertexColor = function(pool, texture)
+-- Returns the correct difficulty color compared to the player
+local GetQuestDifficultyColor = function(level, playerLevel)
+	level = level - (playerLevel or UnitLevel("player"))
+	if (level > 4) then
+		return Colors.quest.red
+	elseif (level > 2) then
+		return Colors.quest.orange
+	elseif (level >= -2) then
+		return Colors.quest.yellow
+	elseif (level >= -GetQuestGreenRange()) then
+		return Colors.quest.green
+	else
+		return Colors.quest.gray
+	end
+end
+
+-- Reset the vertex colors of map overlays
+local Overlay_ResetVertexColor = function(pool, texture)
 	texture:SetVertexColor(1, 1, 1)
 	texture:SetAlpha(1)
 	return TexturePool_HideAndClearAnchors(pool, texture)
 end
 
-local RefreshOverlays = function(pin, fullUpdate)
+-- Refreshes map overlay textures
+local Overlay_RefreshTextures = function(pin, fullUpdate)
 	table_wipe(overlayTextureCache)
 	table_wipe(tileExists)
 
@@ -978,9 +990,15 @@ local RefreshOverlays = function(pin, fullUpdate)
 	end
 end
 
--- OnUpdate Handlers
-----------------------------------------------------
-local AreaLabel_OnUpdate = function(self)
+-- Update all map overlay textures
+local Overlay_UpdateTextures = function(self)
+	for i = 1, #overlayTextureCache do
+		overlayTextureCache[i]:SetShown(ClassicWorldMapEnhanced_DB.revealUnexploredAreas)
+	end
+end
+
+-- Update the worldmap area text
+local OnUpdate_MapAreaLabel = function(self)
 	self:ClearLabel(MAP_AREA_LABEL_TYPE.AREA_NAME)
 	local map = self.dataProvider:GetMap()
 	if (map:IsCanvasMouseFocus()) then
@@ -1036,7 +1054,8 @@ local AreaLabel_OnUpdate = function(self)
 	self:EvaluateLabels()
 end
 
-local Coordinates_OnUpdate = function(self, elapsed)
+-- Update worldmap player- and cursor coordinates
+local OnUpdate_MapCoordinates = function(self, elapsed)
 	self.elapsed = self.elapsed + elapsed
 	if (self.elapsed < .05) then 
 		return 
@@ -1064,7 +1083,8 @@ local Coordinates_OnUpdate = function(self, elapsed)
 	end 
 end
 
-local FadeTimer_OnUpdate = function(self, elapsed) 
+-- Update map opacity based on player movement
+local OnUpdate_MapMovementFader = function(self, elapsed) 
 	self.elapsed = self.elapsed + elapsed
 	if (self.elapsed < self.throttle) then
 		return 
@@ -1093,65 +1113,9 @@ local FadeTimer_OnUpdate = function(self, elapsed)
 	end 
 end
 
--- Addon Init & Events
-----------------------------------------------------
-Private.OnEvent = function(self, event, ...)
-	if (event == "ADDON_LOADED") then 
-		local addon = ...
-		if (addon == ADDON) then 
-			self:UnregisterEvent("ADDON_LOADED")
-			self:OnInit()
-		elseif (addon == "Blizzard_WorldMap") then 
-			self:UnregisterEvent("ADDON_LOADED")
-			self:OnEnable()
-		end
-	elseif (event == "PLAYER_STARTED_MOVING") then 
-		self.FadeTimer.alpha = self.Canvas:GetAlpha()
-		self.FadeTimer.fadeDirection = "OUT"
-		self.FadeTimer.isFading = true
-		self.FadeTimer:SetScript("OnUpdate", FadeTimer_OnUpdate)
-
-	elseif (event == "PLAYER_STOPPED_MOVING") or (event == "PLAYER_ENTERING_WORLD") then 
-		self.FadeTimer.alpha = self.Canvas:GetAlpha()
-		self.FadeTimer.fadeDirection = "IN"
-		self.FadeTimer.isFading = true
-		self.FadeTimer:SetScript("OnUpdate", FadeTimer_OnUpdate)
-	end
-end
-
-Private.OnInit = function(self)
-	if Private:IsAddOnEnabled("Leatrix_Maps") then 
-		return 
-	end
-	-- Check whether or not the addon has been loaded, 
-	-- and if its addon's ADDON_LOADED event has fired.
-	local loaded, finished = IsAddOnLoaded("Blizzard_WorldMap")
-	if (loaded and finished) then 
-		self:OnEnable()
-	else
-		self:RegisterEvent("ADDON_LOADED")
-	end 
-end
-
-Private.OnEnable = function(self)
-	if Private:IsAddOnEnabled("Leatrix_Maps") then 
-		return 
-	end
-
-	self.Canvas = WorldMapFrame
-	self.Container = WorldMapFrame.ScrollContainer
-
-	self:SetUpCanvas()
-	self:SetUpContainer()
-	self:SetUpFading()
-	self:SetUpCoordinates()
-	self:SetUpZoneLevels()
-	self:SetUpMapReveal()
-
-end 
-
 -- Addon API
 ----------------------------------------------------
+-- Set up the main worldmap frame.
 Private.SetUpCanvas = function(self)
 	-- Bring the map down to size.
 	self.Canvas.BlackoutFrame:Hide()
@@ -1162,17 +1126,18 @@ Private.SetUpCanvas = function(self)
 	self.Canvas:RefreshDetailLayers()
 end
 
+-- Add our own API to the WorldMap.
+-- This is needed for the mouseover to align. 
+-- We're also adding Classic mouse zoom here. 
 Private.SetUpContainer = function(self)
-	-- Add our own API to the WorldMap.
-	-- This is needed for the mouseover to align. 
 	for name,method in pairs(Container) do 
 		self.Container[name] = method
 	end 
-
 	-- Fix scroll zooming in classic
 	self.Container:SetScript("OnMouseWheel", self.Container.OnMouseWheel)
 end
 
+-- Set up the movement fader.
 Private.SetUpFading = function(self)
 	self.FadeTimer = CreateFrame("Frame")
 	self.FadeTimer.elapsed = 0
@@ -1188,6 +1153,7 @@ Private.SetUpFading = function(self)
 	self:RegisterEvent("PLAYER_STOPPED_MOVING")
 end
 
+-- Set up the coordinate display. 
 Private.SetUpCoordinates = function(self)
 	local PlayerCoordinates = self.Container:CreateFontString()
 	PlayerCoordinates:SetFontObject(Game12Font_o1)
@@ -1207,17 +1173,19 @@ Private.SetUpCoordinates = function(self)
 	CoordinateTimer.Coordinates = Coordinates
 	CoordinateTimer.PlayerCoordinates = PlayerCoordinates
 	CoordinateTimer.CursorCoordinates = CursorCoordinates
-	CoordinateTimer:SetScript("OnUpdate", Coordinates_OnUpdate)
+	CoordinateTimer:SetScript("OnUpdate", OnUpdate_MapCoordinates)
 end
 
+-- Set up the zone level display. 
 Private.SetUpZoneLevels = function(self)
 	for provider in next, WorldMapFrame.dataProviders do
 		if provider.setAreaLabelCallback then
-			provider.Label:SetScript("OnUpdate", AreaLabel_OnUpdate)
+			provider.Label:SetScript("OnUpdate", OnUpdate_MapAreaLabel)
 		end
 	end
 end
 
+-- Set up the Fog of War removal. 
 Private.SetUpMapReveal = function(self)
 	local button = CreateFrame("CheckButton", nil, WorldMapFrame.BorderFrame, "OptionsCheckButtonTemplate")
 	button:SetPoint("TOPRIGHT", -260, 0)
@@ -1232,31 +1200,87 @@ Private.SetUpMapReveal = function(self)
 	button:SetChecked(not ClassicWorldMapEnhanced_DB.revealUnexploredAreas)
 	button:SetScript("OnClick", function(self)
 		ClassicWorldMapEnhanced_DB.revealUnexploredAreas = not button:GetChecked()
-		Private:UpdateOverlayTextures()
+		Overlay_UpdateTextures()
 	end)
 
 	button:Show()
 
 	for pin in WorldMapFrame:EnumeratePinsByTemplate("MapExplorationPinTemplate") do
-		hooksecurefunc(pin, "RefreshOverlays", RefreshOverlays)
-		pin.overlayTexturePool.resetterFunc = ResetVertexColor
+		hooksecurefunc(pin, "RefreshOverlays", Overlay_RefreshTextures)
+		pin.overlayTexturePool.resetterFunc = Overlay_ResetVertexColor
 	end
 end
 
-Private.UpdateOverlayTextures = function(self)
-	for i = 1, #overlayTextureCache do
-		overlayTextureCache[i]:SetShown(ClassicWorldMapEnhanced_DB.revealUnexploredAreas)
+-- Addon Init & Events
+----------------------------------------------------
+-- Our addon's event handler. Handles all events. 
+Private.OnEvent = function(self, event, ...)
+	if (event == "ADDON_LOADED") then 
+		local addon = ...
+		if (addon == ADDON) then 
+			self:UnregisterEvent("ADDON_LOADED")
+			self:OnInit()
+		elseif (addon == "Blizzard_WorldMap") then 
+			self:UnregisterEvent("ADDON_LOADED")
+			self:OnEnable()
+		end
+	elseif (event == "PLAYER_STARTED_MOVING") then 
+		self.FadeTimer.alpha = self.Canvas:GetAlpha()
+		self.FadeTimer.fadeDirection = "OUT"
+		self.FadeTimer.isFading = true
+		self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
+
+	elseif (event == "PLAYER_STOPPED_MOVING") or (event == "PLAYER_ENTERING_WORLD") then 
+		self.FadeTimer.alpha = self.Canvas:GetAlpha()
+		self.FadeTimer.fadeDirection = "IN"
+		self.FadeTimer.isFading = true
+		self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
 	end
 end
 
--- Retrieve addon info the way we prefer it
+-- This is called whenever our own addon 
+-- and its variables are fully loaded.
+Private.OnInit = function(self)
+	if Private:IsAddOnEnabled("Leatrix_Maps") then 
+		return 
+	end
+	-- Check whether or not the worldmap addon has been loaded, 
+	-- and if its ADDON_LOADED event has fired.
+	local loaded, finished = IsAddOnLoaded("Blizzard_WorldMap")
+	if (loaded and finished) then 
+		self:OnEnable()
+	else
+		self:RegisterEvent("ADDON_LOADED")
+	end 
+end
+
+-- This is called after both our addon 
+-- and the worldmap addon has been fully loaded.
+Private.OnEnable = function(self)
+	if Private:IsAddOnEnabled("Leatrix_Maps") then 
+		return 
+	end
+	self.Canvas = WorldMapFrame
+	self.Container = WorldMapFrame.ScrollContainer
+	self:SetUpCanvas()
+	self:SetUpContainer()
+	self:SetUpFading()
+	self:SetUpCoordinates()
+	self:SetUpZoneLevels()
+	self:SetUpMapReveal()
+end 
+
+-- Retrieve addon info the way we prefer it.
+-- This is mostly a convenience method copied from 
+-- my own private library set to keep APIs consistent. 
 Private.GetAddOnInfo = function(self, index)
 	local name, title, notes, loadable, reason, security, newVersion = GetAddOnInfo(index)
 	local enabled = not(GetAddOnEnableState(UnitName("player"), index) == 0) 
 	return name, title, notes, enabled, loadable, reason, security
 end
 
--- Check if an addon is enabled	in the addon listing
+-- Check if an addon is enabled	in the addon listing,
+-- to avoid relying on addon dependency and loading order. 
 Private.IsAddOnEnabled = function(self, target)
 	local target = string_lower(target)
 	for i = 1,GetNumAddOns() do

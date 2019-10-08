@@ -1,4 +1,4 @@
-[ ![Become a Patreon](http://azeriteui.com/img/social-media-buttons-patreon-small.jpg) ](https://www.patreon.com/AzeriteUI) 
+[ ![Become a Patreon](http://larsnorbergofficial.com/img/social-media-buttons-patreon-small.jpg) ](https://www.patreon.com/goldpawsstuff) 
 
 Simple addon for WoW Classic that makes the WorldMap a little easier to work with, and adds some quality of life features. It has no user configurable settings, and probably never will have. Simple, subtle, super effective and works straight out of the box.
 
@@ -13,15 +13,11 @@ Simple addon for WoW Classic that makes the WorldMap a little easier to work wit
 - Allows mouse wheel zooming. 
 - Disables Fog of War, giving you the ability to see the unexplored areas of the map. _(optional)_
 
-## **Pledge to our work:**  
-* Patreon: [www.patreon.com/AzeriteUI](https://www.patreon.com/azeriteui)  
-* PayPal: [www.paypal.me/AzeriteUI](https://www.paypal.me/azeriteui)  
-* Liberapay: [liberapay.com/AzeriteTeam/donate](https://liberapay.com/AzeriteTeam/donate)
+## **Pledge to my work:**  
+* Patreon: [www.patreon.com/goldpawsstuff](https://www.patreon.com/goldpawsstuff)  
+* PayPal: [www.paypal.me/goldpawsstuff](https://www.paypal.me/goldpawsstuff)  
+* Liberapay: [liberapay.com/goldpawsstuff/donate](https://liberapay.com/goldpawsstuff/donate)
 
-## **Follow Azerite Team:**  
+## **Join me on social media:**  
 * Discord: [discord.gg/MUSfWXd](https://discord.gg/MUSfWXd)  
-* Twitter: [@AzeriteUI](https://twitter.com/azeriteui)  
-* Instagram: [@AzeriteUI](https://instagram.com/azeriteui/)  
-* Facebook: [@AzeriteUI](https://www.facebook.com/azeriteui/)  
-* YouTube: [@AzeriteUI](https://www.youtube.com/azeriteui)  
-* Reddit: [@AzeriteUI](https://www.reddit.com/r/azeriteui/)  
+* Twitter: [@GoldpawsStuff](https://twitter.com/goldpawsstuff)  
