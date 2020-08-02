@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. Be aware th
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.10-Release] 2020-08-02
+### Changed
+- Updated for WoW Classic Client Patch 1.13.5.
+
 ## [1.1.9-Release] 2020-03-11
 ### Changed
 - Updated for WoW Classic Client Patch 1.13.4.
