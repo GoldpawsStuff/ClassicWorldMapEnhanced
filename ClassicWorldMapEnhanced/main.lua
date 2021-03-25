@@ -56,7 +56,7 @@ local L = (function(tbl)
 	-- If this is a non-default locale, 
 	-- make sure any missing entries 
 	-- are copied from the enUS fallback.
-	if (gameLocale ~= enUS) then 
+	if (gameLocale ~= "enUS") then 
 		for i in pairs(tbl.enUS) do 
 			if (not L[i]) then 
 				L[i] = i

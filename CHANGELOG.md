@@ -1,8 +1,12 @@
 # ClassicWorldMapEnhanced Change Log
-All notable changes to this project will be documented in this file. Be aware that the [Unreleased] features might not all be part of the next update, nor will all of them even be available in the latest development version. Instead they are provided to give the users somewhat of a preview of what's to come. 
+All notable changes to this project will be documented in this file. All notable changes to this project will be documented in this file. Be aware that the [Unreleased] features are not yet available in the official tagged builds.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
+
+## [1.1.11-Release] 2021-03-25
+### Fixed
+- Fixed a minor bug in the localization system. 
 
 ## [1.1.10-Release] 2020-08-02
 ### Changed
