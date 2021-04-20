@@ -1,12 +1,17 @@
-## Interface: 11305
-## Name: ClassicWorldMapEnhanced
+## Interface: 11306
+## Interface-Classic: 11306
+
 ## Title: Enhanced WorldMap
-## Author: Lars Norberg
 ## Notes: |cff888888By Lars Norberg.|r|n|nMakes the WorldMap more managable.|n|n|cff4488ffPayPal|r|cffffffff:|r |n|cffffffffwww.paypal.me/GoldpawsStuff|r|n|n|cff4488ffPatreon|r|cffffffff:|r |n|cffffffffwww.patreon.com/GoldpawsStuff|r
+## Author: Lars Norberg
 ## Version: 1.1-Release
+
+## X-Discord: https://discord.gg/MUSfWXd
+## X-Website: https://www.patreon.com/goldpawsstuff
+## X-Curse-Project-ID: 340120
+## X-License: Custom
+
 ## DefaultState: Enabled
 ## SavedVariables: ClassicWorldMapEnhanced_DB
-## X-Discord: https://discord.gg/MUSfWXd
-## X-License: Custom
 
 main.lua
