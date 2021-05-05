@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.15-Release] 2021-05-05
+### Changed
+- Reduced the opacity when moving to 50%, down from its previous 65%. Let's see if this makes it a bit easier to navigate while moving!
+
 ## [1.1.14-Release] 2021-04-22
 - Bump toc version.
 
