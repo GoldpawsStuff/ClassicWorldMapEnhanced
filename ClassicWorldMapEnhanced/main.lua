@@ -250,7 +250,7 @@ local zoneData = {
 	[1413] = { min = 10, max = 25, faction = "Horde" }, 	-- The Barrens
 	[1441] = { min = 24, max = 35 }, 						-- Thousand Needles
 	[1449] = { min = 48, max = 55 }, 						-- Un'Goro Crater
-	[1452] = { min = 55, max = 60 }  						-- Winterspring
+	[1452] = { min = 55, max = 60 },  						-- Winterspring
 	[1943] = { min = 1, max = 10, faction = "Alliance" }, 	-- Azuremyst Isle
 	[1950] = { min = 10, max = 20, faction = "Horde" },  	-- Bloodmyst Isle
 
