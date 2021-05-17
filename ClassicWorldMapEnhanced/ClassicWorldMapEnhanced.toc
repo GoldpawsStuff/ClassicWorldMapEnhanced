@@ -1,6 +1,6 @@
 ## Interface: 11307
 ## Interface-Classic: 11307
-## Interface-BC: 20501
+## Interface-BCC: 20501
 
 ## Title: Enhanced WorldMap
 ## Notes: |cff666666By Lars Norberg.|r|n|nMakes the WorldMap more managable.|n|n|cff4488ffPayPal|r|cffffffff:|r |n|cffffffffwww.paypal.me/GoldpawsStuff|r|n|n|cff4488ffPatreon|r|cffffffff:|r |n|cffffffffwww.patreon.com/GoldpawsStuff|r

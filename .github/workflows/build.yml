@@ -24,4 +24,4 @@ jobs:
       - name: Package BC
         uses: BigWigsMods/packager@master
         with:
-          args: -g bc -m .pkgmeta
+          args: -g bcc -m .pkgmeta
