@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.16-Release] 2021-05-17
+### Added
+- Added zone data for Burning Crusade Classic.
+
+### Changed
+- Moved zone data to a separate file to make it a little easier to support multiple WoW client versions.
+
 ## [1.1.15-Release] 2021-05-05
 ### Changed
 - Reduced the opacity when moving to 50%, down from its previous 65%. Let's see if this makes it a bit easier to navigate while moving!

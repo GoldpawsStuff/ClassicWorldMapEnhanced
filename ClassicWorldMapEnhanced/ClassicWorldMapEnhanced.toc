@@ -16,4 +16,5 @@
 ## DefaultState: Enabled
 ## SavedVariables: ClassicWorldMapEnhanced_DB
 
+data.lua
 main.lua
