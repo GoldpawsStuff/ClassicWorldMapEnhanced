@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.17-Release] 2021-05-17
+- Extra push needed because the bigwigs packager changed its API from using "bc" to calling it "bcc". 
+
 ## [1.2.16-Release] 2021-05-17
 ### Added
 - Added zone data for Burning Crusade Classic.
