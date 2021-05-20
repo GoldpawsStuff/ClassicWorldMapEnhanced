@@ -36,6 +36,7 @@ local GetNumAddOns = GetNumAddOns
 local GetPlayerMapPosition = C_Map.GetPlayerMapPosition
 local GetQuestGreenRange = GetQuestGreenRange
 local IsAddOnLoaded = IsAddOnLoaded
+local IsPlayerMoving = IsPlayerMoving
 local Saturate = Saturate
 local TexturePool_HideAndClearAnchors = TexturePool_HideAndClearAnchors
 local UnitLevel = UnitLevel
@@ -71,7 +72,8 @@ end)({
 	-- Any other localed will use this one
 	-- as a fallback in cases where entries are missing.
 	enUS = {
-		["Fog of War"] = true
+		["Fog of War"] = true,
+		["Fade when moving"] = true
 	}
 })
 
@@ -79,6 +81,7 @@ end)({
 -- These will be overwritten by saved settings, 
 -- so don't edit anything here. 
 ClassicWorldMapEnhanced_DB = {
+	fadeWhenMoving = true,
 	revealUnexploredAreas = true
 }
 
@@ -485,6 +488,31 @@ Private.SetUpFading = function(self)
 	self.FadeTimer.throttle = .02
 	self.FadeTimer.Canvas = self.Canvas
 
+	local button = CreateFrame("CheckButton", nil, WorldMapFrame.BorderFrame, "OptionsCheckButtonTemplate")
+	button:SetPoint("TOPLEFT", 6, 0)
+	button:SetSize(24, 24)
+
+	button.msg = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	button.msg:SetPoint("LEFT", 24, 0)
+	button.msg:SetText(L["Fade when moving"])
+
+	button:SetHitRectInsets(0, 0 - button.msg:GetWidth(), 0, 0)
+	button:SetChecked(ClassicWorldMapEnhanced_DB.fadeWhenMoving)
+	button:SetScript("OnClick", function()
+		ClassicWorldMapEnhanced_DB.fadeWhenMoving = button:GetChecked()
+		if (ClassicWorldMapEnhanced_DB.fadeWhenMoving) then
+			if (IsPlayerMoving()) then
+				self:OnEvent("PLAYER_STARTED_MOVING")
+			else
+				self:OnEvent("PLAYER_STOPPED_MOVING")
+			end
+		else
+			self:OnEvent("PLAYER_STOPPED_MOVING")
+		end
+	end)
+
+	button:Show()
+
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self:RegisterEvent("PLAYER_STARTED_MOVING")
 	self:RegisterEvent("PLAYER_STOPPED_MOVING")
@@ -548,6 +576,22 @@ Private.SetUpMapReveal = function(self)
 	end
 end
 
+-- Fix BC Bugs
+----------------------------------------------------
+Private.FixBlizzardBugs = function(self)
+	if (ns.Version == 2) then
+		if (_G.WorldMapZoneMinimapDropDown) then
+			_G.WorldMapZoneMinimapDropDown:SetScript("OnEnter", function(self)
+				-- Blizzard don't check for a key (yet), so this bugs out with no bind.
+				local key = GetBindingKey("TOGGLEBATTLEFIELDMINIMAP")
+				if (key) then
+					_G.WorldMapZoneMinimapDropDown_OnEnter(self)
+				end
+			end)
+		end
+	end
+end
+
 -- Addon Init & Events
 ----------------------------------------------------
 -- Our addon's event handler. Handles all events. 
@@ -563,7 +607,7 @@ Private.OnEvent = function(self, event, ...)
 		end
 	elseif (event == "PLAYER_STARTED_MOVING") then 
 		self.FadeTimer.alpha = self.Canvas:GetAlpha()
-		self.FadeTimer.fadeDirection = "OUT"
+		self.FadeTimer.fadeDirection = ClassicWorldMapEnhanced_DB.fadeWhenMoving and "OUT" or "IN"
 		self.FadeTimer.isFading = true
 		self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
 
@@ -605,6 +649,7 @@ Private.OnEnable = function(self)
 	self:SetUpCoordinates()
 	self:SetUpZoneLevels()
 	self:SetUpMapReveal()
+	self:FixBlizzardBugs()
 end 
 
 -- Retrieve addon info the way we prefer it.

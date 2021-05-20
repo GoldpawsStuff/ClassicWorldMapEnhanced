@@ -982,5 +982,6 @@ if (Version >= 2) then
 
 end
 
+ns.Version = Version
 ns.zoneData = zoneData
 ns.zoneReveal = zoneReveal

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.18-Release] 2021-05-20
+### Added
+- Added an option in the top left corner to toggle the movement fading.
+
+### Fixed
+- Fixed a Blizzard bug that would cause a bug when hovering above the zone map menu when no keybind for the zone map has been set.
+
 ## [1.2.17-Release] 2021-05-17
 - Extra push needed because the bigwigs packager changed its API from using "bc" to calling it "bcc". 
 
