@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.19-Release] 2021-09-01
+- Bump TOC for BCC 2.5.2.
+
 ## [1.2.18-Release] 2021-05-20
 ### Added
 - Added an option in the top left corner to toggle the movement fading.
