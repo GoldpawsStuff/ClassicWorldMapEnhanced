@@ -568,6 +568,32 @@ Private.SetUpMapReveal = function(self)
 		Overlay_UpdateTextures()
 	end)
 
+	if Private:IsAddOnEnabled("Questie") then
+		local isHooked
+
+		local UpdatePosition = function() 
+			local qbutton = _G.Questie_Toggle
+			if (qbutton) then
+				local point, anchor, rpoint, x, y = qbutton:GetPoint()
+				if (point == "RIGHT" and rpoint == "LEFT" and anchor == _G.WorldMapFrameCloseButton) then
+					button:SetPoint("TOPRIGHT", -(24 + 10 + button.msg:GetWidth() + 10 + qbutton:GetWidth()), 0)
+				end
+			end
+		end
+
+		local Update = function() 
+			local qbutton = _G.Questie_Toggle
+			if (qbutton) then
+				if (not isHooked) then
+					hooksecurefunc(qbutton, "SetPoint", UpdatePosition)
+					isHooked = true
+				end
+				UpdatePosition()
+			end
+		end
+		button:HookScript("OnShow", Update)
+	end
+
 	button:Show()
 
 	for pin in WorldMapFrame:EnumeratePinsByTemplate("MapExplorationPinTemplate") do
@@ -625,9 +651,10 @@ Private.OnInit = function(self)
 	if Private:IsAddOnEnabled("Leatrix_Maps") then 
 		return 
 	end
+
 	-- Check whether or not the worldmap addon has been loaded, 
 	-- and if its ADDON_LOADED event has fired.
-	local loaded, finished = IsAddOnLoaded("Blizzard_WorldMap")
+	loaded, finished = IsAddOnLoaded("Blizzard_WorldMap")
 	if (loaded and finished) then 
 		self:OnEnable()
 	else
