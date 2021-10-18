@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.21-Release] 2021-10-18
+- Bump Classic Era toc to client patch 1.14.
+
 ## [1.2.20-Release] 2021-09-19
 ### Changed
 - Our "Fog of War" button should now get out of the way when Questie's "Hide Questie" button decides to move into the upper right corner. 
