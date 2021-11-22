@@ -7,8 +7,6 @@
 ## Author: Lars Norberg
 ## Version: @project-version@
 
-## X-Discord: https://discord.gg/MUSfWXd
-## X-Website: https://www.patreon.com/goldpawsstuff
 ## X-Curse-Project-ID: 340120
 ## X-Wago-ID: vEGPZk61
 ## X-License: Custom
