@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.23-Release] 2022-02-16
+- ToC bumps and license update.
+
 ## [1.2.22-Release] 2021-11-17
 - Bump Classic Era toc to client patch 1.14.1.
 
