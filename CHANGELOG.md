@@ -4,11 +4,13 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [1.2.26-Release] 2022-09-07
-- Switching to single addon multiple toc-file format.
-
+## [1.2.27-Release] 2022-09-07
 ### Added
 - Added levels for Wrath zones.
+- Added fog of war removal for Wrath zones.
+
+### Changed
+- Switched to single addon with multiple toc-file format.
 
 ## [1.2.25-Release] 2022-07-09
 - Bump for Classic Era client patch 1.14.3.
