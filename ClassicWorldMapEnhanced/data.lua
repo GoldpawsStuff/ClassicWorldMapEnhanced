@@ -14,7 +14,7 @@ local merge = function(target,source)
 	end
 end
 
--- Classic, BC
+-- Classic, BCC
 if (Version >= 1) then
 	-- Zone Levels & Factions
 	-- Using: https://wow.gamepedia.com/Zones_by_level_(Classic)
@@ -682,7 +682,7 @@ if (Version >= 1) then
 	})
 end
 
--- BC
+-- BCC
 if (Version >= 2) then
 
 	-- Zone Levels & Factions
@@ -710,7 +710,7 @@ if (Version >= 2) then
 	})
 
 	----------------------------------------------------------------------
-	-- uiMapID > uiMapArtID: 
+	-- uiMapID > uiMapArtID:
 	-- https://wow.tools/dbc/api/export/?name=uimapxmapart&build=2.5.1.38677
 	-- https://wow.tools/api/export/?name=worldmapoverlay&build=2.5.1.38677
 	----------------------------------------------------------------------
@@ -980,6 +980,34 @@ if (Version >= 2) then
 		}
 	})
 
+end
+
+-- Wrath
+if (Version >= 3) then
+
+	-- Zone Levels & Factions
+	-- Using: https://wowpedia.fandom.com/wiki/Zones_by_level_(original)
+	--        https://wow.tools/maps/worldmap.php?bc=0f30de7bdb3f5ae9c9e8d06c942cf722
+	----------------------------------------------------
+	merge(zoneData, {
+
+		-- Eastern Kingdoms
+		[ 124] = { min = 55, max = 58 }, 						-- Plaguelands: The Scarlet Enclave (Death Knights)
+
+		-- Northrend
+		[ 114] = { min = 68, max = 72 }, 						-- Borean Tundra
+		[ 127] = { min = 77, max = 80 }, 						-- Crystalsong Forest
+		[ 115] = { min = 71, max = 75 }, 						-- Dragonblight
+		[ 116] = { min = 73, max = 75 }, 						-- Grizzly Hills
+		[ 117] = { min = 68, max = 72 }, 						-- Howling Fjord
+		[ 170] = { min = 77, max = 80 }, 						-- Hrothgar's Landing
+		[ 118] = { min = 77, max = 80 }, 						-- Icecrown
+		[ 119] = { min = 76, max = 78 }, 						-- Sholazar Basin
+		[ 120] = { min = 77, max = 80 }, 						-- The Storm Peaks
+		[ 123] = { min = 77, max = 80 }, 						-- Wintergrasp
+		[ 121] = { min = 74, max = 76 } 						-- Zul Drak
+
+	})
 end
 
 ns.Version = Version
