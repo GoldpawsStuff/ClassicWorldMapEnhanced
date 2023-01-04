@@ -1,6 +1,6 @@
 [![patreon](https://www.goldpawsstuff.com/shared/img/common/pa-button.png)](https://www.patreon.com/goldpawsstuff)
 [![paypal](https://www.goldpawsstuff.com/shared/img/common/pp-button.png)](https://www.paypal.me/goldpawsstuff)
-[![discord](https://www.goldpawsstuff.com/shared/img/common/dd-button.png)](https://discord.gg/MUSfWXd)
+[![discord](https://www.goldpawsstuff.com/shared/img/common/dd-button.png)](https://discord.gg/RwcSm8V3Dy)
 [![twitter](https://www.goldpawsstuff.com/shared/img/common/tw-button.png)](https://twitter.com/GoldpawsStuff)
 
 Simple addon for WoW Classic that makes the WorldMap a little easier to work with, and adds some quality of life features. It has no user configurable settings, and probably never will have. Simple, subtle, super effective and works straight out of the box.
