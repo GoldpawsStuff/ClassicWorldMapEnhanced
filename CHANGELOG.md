@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.30-Release] 2023-08-24
+- Updated for Classic client patch 1.14.4.
+
 ## [1.2.29-Release] 2023-06-21
 - Bumped to Wrath Classic Client Patch 3.4.2.
 
