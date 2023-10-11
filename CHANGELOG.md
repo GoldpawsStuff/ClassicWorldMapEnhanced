@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.31-Release] 2023-10-11
+### Removed
+- Removed Wrath compatibility as Blizzard replaced their entire WorldMap in WoW Client Patch 3.4.3, and it is no longer compatible with this addon.
+
 ## [1.2.30-Release] 2023-08-24
 - Updated for Classic client patch 1.14.4.
 
