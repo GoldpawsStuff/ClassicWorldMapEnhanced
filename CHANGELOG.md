@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased] 2023-10-13
+## [1.3.32-Release] 2023-10-13
 ### Added
 - Added compatibility with WoW Client Patch 3.4.3 and the new map with its built-in quest helper functionality.
 
