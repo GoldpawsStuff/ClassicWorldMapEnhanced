@@ -27,7 +27,7 @@ local unpack = unpack
 
 -- WoW API
 local GetAddOnEnableState = GetAddOnEnableState
-local GetAddOnInfo = GetAddOnInfo 
+local GetAddOnInfo = GetAddOnInfo
 local GetBestMapForUnit = C_Map.GetBestMapForUnit
 local GetExploredMapTextures = C_MapExplorationInfo.GetExploredMapTextures
 local GetMapArtID = C_Map.GetMapArtID
@@ -45,30 +45,30 @@ local UnitName = UnitName
 -- Texture caches for map exploration reveal
 local overlayTextureCache, tileExists = {}, {}
 
--- Simplest and hackiest localization system to date. 
+-- Simplest and hackiest localization system to date.
 local gameLocale = GetLocale()
-local L = (function(tbl) 
+local L = (function(tbl)
 	-- Retrieve the correct locale table
 	local L = tbl[gameLocale] or tbl.enUS
 	-- Replace any 'true' values with the key name
-	for i in pairs(L) do 
-		if (L[i] == true) then 
+	for i in pairs(L) do
+		if (L[i] == true) then
 			L[i] = i
 		end
-	end 
-	-- If this is a non-default locale, 
-	-- make sure any missing entries 
+	end
+	-- If this is a non-default locale,
+	-- make sure any missing entries
 	-- are copied from the enUS fallback.
-	if (gameLocale ~= "enUS") then 
-		for i in pairs(tbl.enUS) do 
-			if (not L[i]) then 
+	if (gameLocale ~= "enUS") then
+		for i in pairs(tbl.enUS) do
+			if (not L[i]) then
 				L[i] = i
 			end
 		end
 	end
 	return L
-end)({ 
-	-- This is the default locale. 
+end)({
+	-- This is the default locale.
 	-- Any other localed will use this one
 	-- as a fallback in cases where entries are missing.
 	enUS = {
@@ -78,8 +78,8 @@ end)({
 })
 
 -- Default settings
--- These will be overwritten by saved settings, 
--- so don't edit anything here. 
+-- These will be overwritten by saved settings,
+-- so don't edit anything here.
 ClassicWorldMapEnhanced_DB = {
 	fadeWhenMoving = true,
 	revealUnexploredAreas = true
@@ -87,13 +87,13 @@ ClassicWorldMapEnhanced_DB = {
 
 -- Utility
 ----------------------------------------------------
--- Convert a Blizzard Color or RGB value set 
--- into our own custom color table format. 
+-- Convert a Blizzard Color or RGB value set
+-- into our own custom color table format.
 local createColor = function(...)
 	local tbl
 	if (select("#", ...) == 1) then
 		local old = ...
-		if (old.r) then 
+		if (old.r) then
 			tbl = { old.r or 1, old.g or 1, old.b or 1 }
 		else
 			tbl = { unpack(old) }
@@ -128,7 +128,7 @@ local Colors = {
 	}
 }
 
--- ScrollContainer API 
+-- ScrollContainer API
 ----------------------------------------------------
 local Container = {
 	GetCanvasScale = function(self)
@@ -137,9 +137,9 @@ local Container = {
 	GetCursorPosition = function(self)
 		local currentX, currentY = GetCursorPosition()
 		local scale = UIParent:GetScale()
-		if not(currentX and currentY and scale) then 
+		if not(currentX and currentY and scale) then
 			return 0,0
-		end 
+		end
 		local scaledX, scaledY = currentX/scale, currentY/scale
 		return scaledX, scaledY
 	end,
@@ -210,7 +210,7 @@ local Container = {
 local GetFormattedCoordinates = function(x, y)
 	return string_gsub(string_format("%.1f", x*100), "%.(.+)", "|cff888888.%1|r"),
 	       string_gsub(string_format("%.1f", y*100), "%.(.+)", "|cff888888.%1|r")
-end 
+end
 
 -- Returns the correct difficulty color compared to the player
 local GetQuestDifficultyColor = function(level, playerLevel)
@@ -345,7 +345,7 @@ local OnUpdate_MapAreaLabel = function(self)
 		local name, description, descriptionColor
 		local uiMapID = map:GetMapID()
 		local normalizedCursorX, normalizedCursorY = map:GetNormalizedCursorPosition()
-		local positionMapInfo = C_Map.GetMapInfoAtPosition(uiMapID, normalizedCursorX, normalizedCursorY)	
+		local positionMapInfo = C_Map.GetMapInfoAtPosition(uiMapID, normalizedCursorX, normalizedCursorY)
 		if (positionMapInfo and (positionMapInfo.mapID ~= uiMapID)) then
 			name = positionMapInfo.name
 			local playerMinLevel, playerMaxLevel, playerFaction
@@ -354,18 +354,18 @@ local OnUpdate_MapAreaLabel = function(self)
 				playerMaxLevel = zoneData[positionMapInfo.mapID].max
 				playerFaction = zoneData[positionMapInfo.mapID].faction
 			end
-			if (playerFaction) then 
+			if (playerFaction) then
 				local englishFaction, localizedFaction = UnitFactionGroup("player")
-				if (playerFaction == "Alliance") then 
-					description = string_format(FACTION_CONTROLLED_TERRITORY, FACTION_ALLIANCE) 
-				elseif (playerFaction == "Horde") then 
-					description = string_format(FACTION_CONTROLLED_TERRITORY, FACTION_HORDE) 
-				end 
-				if (englishFaction == playerFaction) then 
+				if (playerFaction == "Alliance") then
+					description = string_format(FACTION_CONTROLLED_TERRITORY, FACTION_ALLIANCE)
+				elseif (playerFaction == "Horde") then
+					description = string_format(FACTION_CONTROLLED_TERRITORY, FACTION_HORDE)
+				end
+				if (englishFaction == playerFaction) then
 					description = Colors.faction.friendly.colorCode .. description .. FONT_COLOR_CODE_CLOSE
 				else
 					description = Colors.faction.hostile.colorCode .. description .. FONT_COLOR_CODE_CLOSE
-				end 
+				end
 			end
 			if (name and playerMinLevel and playerMaxLevel and (playerMinLevel > 0) and (playerMaxLevel > 0)) then
 				local playerLevel = UnitLevel("player")
@@ -397,60 +397,60 @@ end
 -- Update worldmap player- and cursor coordinates
 local OnUpdate_MapCoordinates = function(self, elapsed)
 	self.elapsed = self.elapsed + elapsed
-	if (self.elapsed < .05) then 
-		return 
-	end 
+	if (self.elapsed < .05) then
+		return
+	end
 	local pX, pY, cX, cY
 	local uiMapID = GetBestMapForUnit("player")
-	if (uiMapID) then 
+	if (uiMapID) then
 		local mapPosObject = GetPlayerMapPosition(uiMapID, "player")
-		if (mapPosObject) then 
+		if (mapPosObject) then
 			pX, pY = mapPosObject:GetXY()
-		end 
-	end 
-	if (self.Canvas:IsMouseOver(0, 0, 0, 0)) then 
+		end
+	end
+	if (self.Canvas:IsMouseOver(0, 0, 0, 0)) then
 		cX, cY = self.Canvas:GetNormalizedCursorPosition()
 	end
-	if (pX and pY) then 
+	if (pX and pY) then
 		self.PlayerCoordinates:SetFormattedText(Colors.title.colorCode.."%1$s|r %2$s %3$s", PLAYER, GetFormattedCoordinates(pX, pY))
-	else 
+	else
 		self.PlayerCoordinates:SetText("")
-	end 
-	if (cX and cY) then 
+	end
+	if (cX and cY) then
 		self.CursorCoordinates:SetFormattedText("%2$s %3$s "..Colors.title.colorCode.."%1$s|r", MOUSE_LABEL, GetFormattedCoordinates(cX, cY))
 	else
 		self.CursorCoordinates:SetText("")
-	end 
+	end
 end
 
 -- Update map opacity based on player movement
-local OnUpdate_MapMovementFader = function(self, elapsed) 
+local OnUpdate_MapMovementFader = function(self, elapsed)
 	self.elapsed = self.elapsed + elapsed
 	if (self.elapsed < self.throttle) then
-		return 
-	end 
-	if (self.isFading) then 
-		if (self.fadeDirection == "IN") then 
-			if (self.alpha + self.stepIn < self.stopAlpha) then 
+		return
+	end
+	if (self.isFading) then
+		if (self.fadeDirection == "IN") then
+			if (self.alpha + self.stepIn < self.stopAlpha) then
 				self.alpha = self.alpha + self.stepIn
-			else 
+			else
 				self.alpha = self.stopAlpha
 				self.fadeDirection = nil
 				self.isFading = nil
 				self:SetScript("OnUpdate", nil)
-			end 
-		elseif (self.fadeDirection == "OUT") then 
-			if (self.alpha - self.stepOut > self.moveAlpha) then 
+			end
+		elseif (self.fadeDirection == "OUT") then
+			if (self.alpha - self.stepOut > self.moveAlpha) then
 				self.alpha = self.alpha - self.stepOut
-			else 
+			else
 				self.alpha = self.moveAlpha
 				self.fadeDirection = nil
 				self.isFading = nil
 				self:SetScript("OnUpdate", nil)
-			end 
-		end 
+			end
+		end
 		self.Canvas:SetAlpha(self.alpha)
-	end 
+	end
 end
 
 -- Addon API
@@ -467,12 +467,12 @@ Private.SetUpCanvas = function(self)
 end
 
 -- Add our own API to the WorldMap.
--- This is needed for the mouseover to align. 
--- We're also adding Classic mouse zoom here. 
+-- This is needed for the mouseover to align.
+-- We're also adding Classic mouse zoom here.
 Private.SetUpContainer = function(self)
-	for name,method in pairs(Container) do 
+	for name,method in pairs(Container) do
 		self.Container[name] = method
-	end 
+	end
 	-- Fix scroll zooming in classic
 	self.Container:SetScript("OnMouseWheel", self.Container.OnMouseWheel)
 end
@@ -518,7 +518,7 @@ Private.SetUpFading = function(self)
 	self:RegisterEvent("PLAYER_STOPPED_MOVING")
 end
 
--- Set up the coordinate display. 
+-- Set up the coordinate display.
 Private.SetUpCoordinates = function(self)
 	local PlayerCoordinates = self.Container:CreateFontString()
 	PlayerCoordinates:SetFontObject(Game12Font_o1)
@@ -541,7 +541,7 @@ Private.SetUpCoordinates = function(self)
 	CoordinateTimer:SetScript("OnUpdate", OnUpdate_MapCoordinates)
 end
 
--- Set up the zone level display. 
+-- Set up the zone level display.
 Private.SetUpZoneLevels = function(self)
 	for provider in next, WorldMapFrame.dataProviders do
 		if provider.setAreaLabelCallback then
@@ -550,7 +550,7 @@ Private.SetUpZoneLevels = function(self)
 	end
 end
 
--- Set up the Fog of War removal. 
+-- Set up the Fog of War removal.
 Private.SetUpMapReveal = function(self)
 	local button = CreateFrame("CheckButton", nil, WorldMapFrame.BorderFrame, "OptionsCheckButtonTemplate")
 	button:SetPoint("TOPRIGHT", -260, 0)
@@ -571,7 +571,7 @@ Private.SetUpMapReveal = function(self)
 	if Private:IsAddOnEnabled("Questie") then
 		local isHooked
 
-		local UpdatePosition = function() 
+		local UpdatePosition = function()
 			local qbutton = _G.Questie_Toggle
 			if (qbutton) then
 				local point, anchor, rpoint, x, y = qbutton:GetPoint()
@@ -581,7 +581,7 @@ Private.SetUpMapReveal = function(self)
 			end
 		end
 
-		local Update = function() 
+		local Update = function()
 			local qbutton = _G.Questie_Toggle
 			if (qbutton) then
 				if (not isHooked) then
@@ -620,24 +620,24 @@ end
 
 -- Addon Init & Events
 ----------------------------------------------------
--- Our addon's event handler. Handles all events. 
+-- Our addon's event handler. Handles all events.
 Private.OnEvent = function(self, event, ...)
-	if (event == "ADDON_LOADED") then 
+	if (event == "ADDON_LOADED") then
 		local addon = ...
-		if (addon == ADDON) then 
+		if (addon == ADDON) then
 			self:UnregisterEvent("ADDON_LOADED")
 			self:OnInit()
-		elseif (addon == "Blizzard_WorldMap") then 
+		elseif (addon == "Blizzard_WorldMap") then
 			self:UnregisterEvent("ADDON_LOADED")
 			self:OnEnable()
 		end
-	elseif (event == "PLAYER_STARTED_MOVING") then 
+	elseif (event == "PLAYER_STARTED_MOVING") then
 		self.FadeTimer.alpha = self.Canvas:GetAlpha()
 		self.FadeTimer.fadeDirection = ClassicWorldMapEnhanced_DB.fadeWhenMoving and "OUT" or "IN"
 		self.FadeTimer.isFading = true
 		self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
 
-	elseif (event == "PLAYER_STOPPED_MOVING") or (event == "PLAYER_ENTERING_WORLD") then 
+	elseif (event == "PLAYER_STOPPED_MOVING") or (event == "PLAYER_ENTERING_WORLD") then
 		self.FadeTimer.alpha = self.Canvas:GetAlpha()
 		self.FadeTimer.fadeDirection = "IN"
 		self.FadeTimer.isFading = true
@@ -645,28 +645,28 @@ Private.OnEvent = function(self, event, ...)
 	end
 end
 
--- This is called whenever our own addon 
+-- This is called whenever our own addon
 -- and its variables are fully loaded.
 Private.OnInit = function(self)
-	if Private:IsAddOnEnabled("Leatrix_Maps") then 
-		return 
+	if Private:IsAddOnEnabled("Leatrix_Maps") then
+		return
 	end
 
-	-- Check whether or not the worldmap addon has been loaded, 
+	-- Check whether or not the worldmap addon has been loaded,
 	-- and if its ADDON_LOADED event has fired.
-	loaded, finished = IsAddOnLoaded("Blizzard_WorldMap")
-	if (loaded and finished) then 
+	local loaded, finished = IsAddOnLoaded("Blizzard_WorldMap")
+	if (loaded and finished) then
 		self:OnEnable()
 	else
 		self:RegisterEvent("ADDON_LOADED")
-	end 
+	end
 end
 
--- This is called after both our addon 
+-- This is called after both our addon
 -- and the worldmap addon has been fully loaded.
 Private.OnEnable = function(self)
-	if Private:IsAddOnEnabled("Leatrix_Maps") then 
-		return 
+	if Private:IsAddOnEnabled("Leatrix_Maps") then
+		return
 	end
 	self.Canvas = WorldMapFrame
 	self.Container = WorldMapFrame.ScrollContainer
@@ -677,19 +677,19 @@ Private.OnEnable = function(self)
 	self:SetUpZoneLevels()
 	self:SetUpMapReveal()
 	self:FixBlizzardBugs()
-end 
+end
 
 -- Retrieve addon info the way we prefer it.
--- This is mostly a convenience method copied from 
--- my own private library set to keep APIs consistent. 
+-- This is mostly a convenience method copied from
+-- my own private library set to keep APIs consistent.
 Private.GetAddOnInfo = function(self, index)
 	local name, title, notes, loadable, reason, security, newVersion = GetAddOnInfo(index)
-	local enabled = not(GetAddOnEnableState(UnitName("player"), index) == 0) 
+	local enabled = not(GetAddOnEnableState(UnitName("player"), index) == 0)
 	return name, title, notes, enabled, loadable, reason, security
 end
 
 -- Check if an addon is enabled	in the addon listing,
--- to avoid relying on addon dependency and loading order. 
+-- to avoid relying on addon dependency and loading order.
 Private.IsAddOnEnabled = function(self, target)
 	local target = string_lower(target)
 	for i = 1,GetNumAddOns() do
