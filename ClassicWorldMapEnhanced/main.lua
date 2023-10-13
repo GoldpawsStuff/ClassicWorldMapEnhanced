@@ -503,15 +503,6 @@ local WorldMapFrame_Maximize = function()
 	local WorldMapFrame = WorldMapFrame
 	WorldMapFrame:SetParent(UIParent)
 	WorldMapFrame:SetScale(1)
-
-	if (WorldMapFrame:GetAttribute("UIPanelLayout-area") ~= "center") then
-		SetUIPanelAttribute(WorldMapFrame, "area", "center")
-	end
-
-	if (WorldMapFrame:GetAttribute("UIPanelLayout-allowOtherPanels") ~= true) then
-		SetUIPanelAttribute(WorldMapFrame, "allowOtherPanels", true)
-	end
-
 	WorldMapFrame:OnFrameSizeChanged()
 	WorldMapFrame_UpdatePositions()
 end
@@ -589,6 +580,7 @@ end
 
 -- Set up the movement fader.
 Private.SetUpFading = function(self)
+
 	self.FadeTimer = CreateFrame("Frame")
 	self.FadeTimer.elapsed = 0
 	self.FadeTimer.stopAlpha = .9
@@ -755,23 +747,35 @@ Private.OnEvent = function(self, event, ...)
 	if (event == "ADDON_LOADED") then
 		local addon = ...
 		if (addon == ADDON) then
-			self:UnregisterEvent("ADDON_LOADED")
+			if (IsAddOnLoaded("Blizzard_WorldMap")) then
+				self:UnregisterEvent("ADDON_LOADED")
+			end
+
 			self:OnInit()
+
 		elseif (addon == "Blizzard_WorldMap") then
-			self:UnregisterEvent("ADDON_LOADED")
+			if (IsAddOnLoaded(ADDON)) then
+				self:UnregisterEvent("ADDON_LOADED")
+			end
+
 			self:OnEnable()
+
 		end
+
 	elseif (event == "PLAYER_STARTED_MOVING") then
+
 		self.FadeTimer.alpha = self.Canvas:GetAlpha()
 		self.FadeTimer.fadeDirection = ClassicWorldMapEnhanced_DB.fadeWhenMoving and "OUT" or "IN"
 		self.FadeTimer.isFading = true
 		self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
 
 	elseif (event == "PLAYER_STOPPED_MOVING") or (event == "PLAYER_ENTERING_WORLD") then
+
 		self.FadeTimer.alpha = self.Canvas:GetAlpha()
 		self.FadeTimer.fadeDirection = "IN"
 		self.FadeTimer.isFading = true
 		self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
+
 	end
 end
 
