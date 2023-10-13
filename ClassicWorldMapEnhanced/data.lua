@@ -1,8 +1,14 @@
 local _,ns = ...
 
 -- Simple client version checks
-local Version = tonumber((string.split(".", (GetBuildInfo())))) or 0
-ns.isCompatible = (Version == 1) or (Version == 2) or (Version == 3)
+local version, build, date, tocversion, localizedVersion, buildType = GetBuildInfo()
+build = tonumber(build)
+
+local major = tonumber((string.split(".", version))) or 0
+
+ns.isCompatible = (major == 1) or (major == 2) or (major == 3)
+ns.HasQuestHelper = build >= 51739
+
 if (not ns.isCompatible) then
 	return
 end
@@ -15,7 +21,7 @@ local merge = function(target,source)
 end
 
 -- Classic, BCC
-if (Version >= 1) then
+if (major >= 1) then
 	-- Zone Levels & Factions
 	-- Using: https://wow.gamepedia.com/Zones_by_level_(Classic)
 	----------------------------------------------------
@@ -689,7 +695,7 @@ if (Version >= 1) then
 end
 
 -- BCC
-if (Version >= 2) then
+if (major >= 2) then
 
 	-- Zone Levels & Factions
 	-- Using: https://wowpedia.fandom.com/wiki/Zones_by_level_(original)
@@ -992,7 +998,7 @@ if (Version >= 2) then
 end
 
 -- Wrath
-if (Version >= 3) then
+if (major >= 3) then
 
 	-- Zone Levels & Factions
 	-- Using: https://wowpedia.fandom.com/wiki/Zones_by_level_(original)
@@ -1243,6 +1249,7 @@ if (Version >= 3) then
 
 end
 
-ns.Version = Version
+ns.Version = major
+ns.Build = build
 ns.zoneData = zoneData
 ns.zoneReveal = zoneReveal

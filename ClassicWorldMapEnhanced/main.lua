@@ -15,6 +15,7 @@ local ipairs = ipairs
 local math_ceil = math.ceil
 local math_floor = math.floor
 local math_mod = math.fmod
+local pairs = pairs
 local select = select
 local string_format = string.format
 local string_gsub = string.gsub
@@ -127,6 +128,22 @@ local Colors = {
 		gray = createColor(120/255, 120/255, 120/255)
 	}
 }
+
+local CalculateScale = function()
+	local min, max = 0.65, 0.95 -- our own scale limits
+	local uiMin, uiMax = 0.65, 1.15 -- blizzard uiScale slider limits
+	local uiScale = UIParent:GetEffectiveScale() -- current blizzard uiScale
+	-- Calculate and return a relative scale
+	-- that is user adjustable through graphics settings,
+	-- but still keeps itself within our intended limits.
+	if (uiScale < uiMin) then
+		return min
+	elseif (uiScale > uiMax) then
+		return max
+	else
+		return ((uiScale - uiMin) / (uiMax - uiMin)) * (max - min) + min
+	end
+end
 
 -- ScrollContainer API
 ----------------------------------------------------
@@ -417,7 +434,11 @@ local OnUpdate_MapCoordinates = function(self, elapsed)
 		self.PlayerCoordinates:SetText("")
 	end
 	if (cX and cY) then
-		self.CursorCoordinates:SetFormattedText("%2$s %3$s "..Colors.title.colorCode.."%1$s|r", MOUSE_LABEL, GetFormattedCoordinates(cX, cY))
+		if (ns.HasQuestHelper) then
+			self.CursorCoordinates:SetFormattedText(Colors.title.colorCode.."%1$s|r %2$s %3$s", MOUSE_LABEL, GetFormattedCoordinates(cX, cY))
+		else
+			self.CursorCoordinates:SetFormattedText("%2$s %3$s "..Colors.title.colorCode.."%1$s|r", MOUSE_LABEL, GetFormattedCoordinates(cX, cY))
+		end
 	else
 		self.CursorCoordinates:SetText("")
 	end
@@ -453,17 +474,106 @@ local OnUpdate_MapMovementFader = function(self, elapsed)
 	end
 end
 
+local WorldMapFrame_UpdatePositions = function()
+	local WorldMapFrame = WorldMapFrame
+
+	WorldMapTrackQuest:ClearAllPoints()
+	WorldMapTrackQuest:SetPoint("LEFT", WorldMapQuestShowObjectives, "LEFT", -(10 + WorldMapTrackQuestText:GetWidth() + 24), 0)
+
+	if (Private.PlayerCoordinates) then
+		if (WorldMapFrame.isMaximized) then
+			Private.PlayerCoordinates:SetPoint("BOTTOMLEFT", WorldMapFrame.BorderFrame, "BOTTOMLEFT", 4 + 11, 10)
+		else
+			Private.PlayerCoordinates:SetPoint("BOTTOMLEFT", WorldMapFrame.BorderFrame, "BOTTOMLEFT", 4 + 20, 10)
+		end
+	end
+
+	if (Private.FadeWhenMovingButton) then
+		if (WorldMapFrame.isMaximized) then
+			Private.FadeWhenMovingButton:SetParent(WorldMapFrame.BorderFrame)
+			Private.FadeWhenMovingButton:SetPoint("TOPLEFT", 6, 0)
+		else
+			Private.FadeWhenMovingButton:SetParent(WorldMapFrame.MiniBorderFrame)
+			Private.FadeWhenMovingButton:SetPoint("TOPLEFT", 6 + 12, -28)
+		end
+	end
+end
+
+local WorldMapFrame_Maximize = function()
+	local WorldMapFrame = WorldMapFrame
+	WorldMapFrame:SetParent(UIParent)
+	WorldMapFrame:SetScale(1)
+
+	if (WorldMapFrame:GetAttribute("UIPanelLayout-area") ~= "center") then
+		SetUIPanelAttribute(WorldMapFrame, "area", "center")
+	end
+
+	if (WorldMapFrame:GetAttribute("UIPanelLayout-allowOtherPanels") ~= true) then
+		SetUIPanelAttribute(WorldMapFrame, "allowOtherPanels", true)
+	end
+
+	WorldMapFrame:OnFrameSizeChanged()
+	WorldMapFrame_UpdatePositions()
+end
+
+local WorldMapFrame_Minimize = function()
+	local WorldMapFrame = WorldMapFrame
+	if (not WorldMapFrame:IsMaximized()) then
+		WorldMapFrame:ClearAllPoints()
+		WorldMapFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 16, -94)
+		WorldMapFrame_UpdatePositions()
+	end
+end
+
+local WorldMapFrame_SyncState = function()
+	local WorldMapFrame = WorldMapFrame
+	if (WorldMapFrame:IsMaximized()) then
+		WorldMapFrame:ClearAllPoints()
+		WorldMapFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 30)
+		WorldMapFrame_UpdatePositions()
+	end
+end
+
+local WorldMapFrame_UpdateMaximizedSize = function()
+	local WorldMapFrame = WorldMapFrame
+	local width, height = WorldMapFrame:GetSize()
+	local scale = CalculateScale()
+	local magicNumber = (1 - scale) * 100
+	WorldMapFrame:SetSize((width * scale) - (magicNumber + 2), (height * scale) - 2)
+end
+
 -- Addon API
 ----------------------------------------------------
 -- Set up the main worldmap frame.
 Private.SetUpCanvas = function(self)
-	-- Bring the map down to size.
+
 	self.Canvas.BlackoutFrame:Hide()
+
+	if (ns.HasQuestHelper) then
+		self.Canvas.BlackoutFrame:HookScript("OnShow", self.Canvas.BlackoutFrame.Hide)
+	end
+
 	self.Canvas:SetIgnoreParentScale(false)
 	self.Canvas:SetFrameStrata("MEDIUM")
+	self.Canvas:ClearAllPoints()
+	self.Canvas:SetPoint("CENTER")
 	self.Canvas.BorderFrame:SetFrameStrata("MEDIUM")
 	self.Canvas.BorderFrame:SetFrameLevel(1)
 	self.Canvas:RefreshDetailLayers()
+
+	if (ns.HasQuestHelper) then
+		hooksecurefunc(self.Canvas, "Maximize", WorldMapFrame_Maximize)
+		hooksecurefunc(self.Canvas, "Minimize", WorldMapFrame_Minimize)
+		hooksecurefunc(self.Canvas, "SynchronizeDisplayState", WorldMapFrame_SyncState)
+		hooksecurefunc("WorldMapQuestShowObjectives_Toggle", WorldMapFrame_UpdatePositions)
+
+		if (self.Canvas:IsMaximized()) then
+			WorldMapFrame_UpdateMaximizedSize()
+			WorldMapFrame_Maximize()
+		end
+
+		WorldMapFrame_UpdatePositions()
+	end
 end
 
 -- Add our own API to the WorldMap.
@@ -491,6 +601,8 @@ Private.SetUpFading = function(self)
 	local button = CreateFrame("CheckButton", nil, WorldMapFrame.BorderFrame, "OptionsCheckButtonTemplate")
 	button:SetPoint("TOPLEFT", 6, 0)
 	button:SetSize(24, 24)
+
+	self.FadeWhenMovingButton = button
 
 	button.msg = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	button.msg:SetPoint("LEFT", 24, 0)
@@ -522,15 +634,31 @@ end
 Private.SetUpCoordinates = function(self)
 	local PlayerCoordinates = self.Container:CreateFontString()
 	PlayerCoordinates:SetFontObject(Game12Font_o1)
-	PlayerCoordinates:SetPoint("TOPLEFT", self.Container, "BOTTOMLEFT", 10, -7)
+
+	if (ns.HasQuestHelper) then
+		WorldMapFrame_UpdatePositions()
+	else
+		PlayerCoordinates:SetPoint("TOPLEFT", self.Canvas, "BOTTOMLEFT", 10, -7)
+	end
+
 	PlayerCoordinates:SetDrawLayer("OVERLAY")
 	PlayerCoordinates:SetJustifyH("LEFT")
 
+	self.PlayerCoordinates = PlayerCoordinates
+
 	local CursorCoordinates = self.Container:CreateFontString()
 	CursorCoordinates:SetFontObject(Game12Font_o1)
-	CursorCoordinates:SetPoint("TOPRIGHT", self.Container, "BOTTOMRIGHT", -10, -7)
+
+	if (ns.HasQuestHelper) then
+		CursorCoordinates:SetPoint("TOPLEFT", PlayerCoordinates, "TOPRIGHT", 10, 0)
+	else
+		CursorCoordinates:SetPoint("TOPRIGHT", self.Container, "BOTTOMRIGHT", -10, -7)
+	end
+
 	CursorCoordinates:SetDrawLayer("OVERLAY")
 	CursorCoordinates:SetJustifyH("RIGHT")
+
+	self.CursorCoordinates = CursorCoordinates
 
 	local CoordinateTimer = CreateFrame("Frame", nil, self.Canvas)
 	CoordinateTimer.elapsed = 0
@@ -539,6 +667,8 @@ Private.SetUpCoordinates = function(self)
 	CoordinateTimer.PlayerCoordinates = PlayerCoordinates
 	CoordinateTimer.CursorCoordinates = CursorCoordinates
 	CoordinateTimer:SetScript("OnUpdate", OnUpdate_MapCoordinates)
+
+	WorldMapFrame_UpdatePositions()
 end
 
 -- Set up the zone level display.
@@ -560,7 +690,6 @@ Private.SetUpMapReveal = function(self)
 	button.msg:SetPoint("LEFT", 24, 0)
 	button.msg:SetText(L["Fog of War"])
 
-	button:SetPoint("TOPRIGHT", -(24 + 10 + button.msg:GetWidth()), 0)
 	button:SetHitRectInsets(0, 0 - button.msg:GetWidth(), 0, 0)
 	button:SetChecked(not ClassicWorldMapEnhanced_DB.revealUnexploredAreas)
 	button:SetScript("OnClick", function(self)
@@ -576,6 +705,7 @@ Private.SetUpMapReveal = function(self)
 			if (qbutton) then
 				local point, anchor, rpoint, x, y = qbutton:GetPoint()
 				if (point == "RIGHT" and rpoint == "LEFT" and anchor == _G.WorldMapFrameCloseButton) then
+					button:ClearAllPoints()
 					button:SetPoint("TOPRIGHT", -(24 + 10 + button.msg:GetWidth() + 10 + qbutton:GetWidth()), 0)
 				end
 			end
@@ -668,7 +798,13 @@ Private.OnEnable = function(self)
 	if Private:IsAddOnEnabled("Leatrix_Maps") then
 		return
 	end
+
 	self.Canvas = WorldMapFrame
+
+	if (ns.HasQuestHelper) then
+		self.Canvas:HookScript("OnShow", function() self:OnEvent("PLAYER_ENTERING_WORLD") end)
+	end
+
 	self.Container = WorldMapFrame.ScrollContainer
 	self:SetUpCanvas()
 	self:SetUpContainer()
