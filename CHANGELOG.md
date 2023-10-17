@@ -5,8 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased] 2023-10-17
-### Fixed
-- Looking into quest levels and fog of war inconsistencies.
+- Rewrote addon to use ace3 and external libraries.
 
 ## [1.3.33-Release] 2023-10-13
 ### Fixed
