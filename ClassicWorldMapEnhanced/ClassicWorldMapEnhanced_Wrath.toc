@@ -10,7 +10,18 @@
 ## X-License: Custom
 
 ## DefaultState: Enabled
-## SavedVariables: ClassicWorldMapEnhanced_DB
 
-data.lua
-main.lua
+## SavedVariables: ClassicWorldMapEnhanced_DB
+## OptionalDeps: TaintLess, Ace3, LibMoreEvents-1.0
+
+# Libraries
+Embeds.xml
+
+# Addon localization
+Locale\Locale.xml
+
+# Addon data
+Data.lua
+
+# Addon core
+Main.lua
