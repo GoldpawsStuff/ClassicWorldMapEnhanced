@@ -4,8 +4,8 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased] 2023-10-17
-- Rewrote addon to use external libraries.
+## [2.3.34-Release] 2023-10-17
+- Rewrote addon to use external libraries in preparation for future updates.
 
 ## [1.3.33-Release] 2023-10-13
 ### Fixed
