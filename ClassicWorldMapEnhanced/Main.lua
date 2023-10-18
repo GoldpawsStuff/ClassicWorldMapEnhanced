@@ -799,6 +799,20 @@ ns.FixBlizzardBugs = function(self)
 	end
 end
 
+ns.StartFading = function(self)
+	self.FadeTimer.alpha = self.Canvas:GetAlpha()
+	self.FadeTimer.fadeDirection = ClassicWorldMapEnhanced_DB.fadeWhenMoving and "OUT" or "IN"
+	self.FadeTimer.isFading = true
+	self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
+end
+
+ns.StopFading = function(self)
+	self.FadeTimer.alpha = self.Canvas:GetAlpha()
+	self.FadeTimer.fadeDirection = "IN"
+	self.FadeTimer.isFading = true
+	self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
+end
+
 -- Addon Init & Events
 ----------------------------------------------------
 ns.OnEvent = function(self, event, ...)
@@ -811,10 +825,7 @@ ns.OnEvent = function(self, event, ...)
 
 	elseif (event == "PLAYER_STARTED_MOVING") then
 
-		self.FadeTimer.alpha = self.Canvas:GetAlpha()
-		self.FadeTimer.fadeDirection = ClassicWorldMapEnhanced_DB.fadeWhenMoving and "OUT" or "IN"
-		self.FadeTimer.isFading = true
-		self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
+		self:StartFading()
 
 	elseif (event == "PLAYER_STOPPED_MOVING") or (event == "PLAYER_ENTERING_WORLD") then
 
@@ -824,10 +835,12 @@ ns.OnEvent = function(self, event, ...)
 			end
 		end
 
-		self.FadeTimer.alpha = self.Canvas:GetAlpha()
-		self.FadeTimer.fadeDirection = "IN"
-		self.FadeTimer.isFading = true
-		self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
+		-- This could be a reload or map opening.
+		if (IsPlayerMoving()) then
+			self:StartFading()
+		else
+			self:StopFading()
+		end
 
 	end
 end
