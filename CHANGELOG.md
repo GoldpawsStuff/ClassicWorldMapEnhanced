@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.3.36-Release] 2023-10-19
+### Fixed
+- Fixed an issue that prevent external libraries from being embedded by the packager, thus breaking the entire addon.
+
 ## [2.3.35-Release] 2023-10-18
 ### Fixed
 - Fixed an issue where the map would refuse to fade if shown while the player was already moving.
