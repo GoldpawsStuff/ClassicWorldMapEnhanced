@@ -4,15 +4,21 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [2.3.36-Release] 2023-10-19
+## [2.0.37-Release] 2023-10-21
+### Fixed
+- Fixed wrong and too high version numbers after releasing major version 2.x.
+- Fixed an issue where the Classic Era version attempted to load Wrath Classic code, thus breaking the addon.
+- Fixed an issue where overlay textures would be stacked instead of toggled, resulting in the Fog of War never returning once removed.
+
+## [2.0.36-Release] 2023-10-19
 ### Fixed
 - Fixed an issue that prevent external libraries from being embedded by the packager, thus breaking the entire addon.
 
-## [2.3.35-Release] 2023-10-18
+## [2.0.35-Release] 2023-10-18
 ### Fixed
 - Fixed an issue where the map would refuse to fade if shown while the player was already moving.
 
-## [2.3.34-Release] 2023-10-17
+## [2.0.34-Release] 2023-10-17
 - Rewrote addon to use external libraries in preparation for future updates.
 
 ## [1.3.33-Release] 2023-10-13
