@@ -493,6 +493,8 @@ local OnUpdate_MapMovementFader = function(self, elapsed)
 end
 
 local WorldMapFrame_UpdatePositions = function()
+	if (not ns.HasQuestHelper) then return end
+
 	local WorldMapFrame = WorldMapFrame
 
 	WorldMapTrackQuest:ClearAllPoints()
@@ -660,7 +662,7 @@ ns.SetUpCoordinates = function(self)
 	if (ns.HasQuestHelper) then
 		WorldMapFrame_UpdatePositions()
 	else
-		PlayerCoordinates:SetPoint("TOPLEFT", self.Canvas, "BOTTOMLEFT", 10, -7)
+		PlayerCoordinates:SetPoint("TOPLEFT", self.Container, "BOTTOMLEFT", 10, -7)
 	end
 
 	PlayerCoordinates:SetDrawLayer("OVERLAY")
