@@ -720,10 +720,13 @@ ns.SetUpMapReveal = function(self)
 	button:SetScript("OnClick", function(self)
 		ClassicWorldMapEnhanced_DB.revealUnexploredAreas = not ClassicWorldMapEnhanced_DB.revealUnexploredAreas
 
-		--Overlay_UpdateTextures()
-		for pin in next,pins do
-			Overlay_RefreshTextures(pin)
-		end
+		-- This updates existing overlay textures.
+		Overlay_UpdateTextures()
+
+		-- This creates new ones, making the fog disappear forever. Bad idea.
+		--for pin in next,pins do
+		--	Overlay_RefreshTextures(pin)
+		--end
 
 	end)
 
