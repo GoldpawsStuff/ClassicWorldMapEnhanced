@@ -7,7 +7,7 @@ build = tonumber(build)
 local major = tonumber((string.split(".", version))) or 0
 
 ns.isCompatible = (major == 1) or (major == 2) or (major == 3)
-ns.HasQuestHelper = build >= 51739
+ns.HasQuestHelper = major == 3 and build >= 51739
 
 if (not ns.isCompatible) then
 	return
