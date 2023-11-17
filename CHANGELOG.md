@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.38-Release] 2023-11-17
+- Updated for WoW Client Patch 1.15.0.
+
 ## [2.0.37-Release] 2023-10-21
 ### Fixed
 - Fixed wrong and too high version numbers after releasing major version 2.x.
