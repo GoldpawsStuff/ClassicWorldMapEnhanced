@@ -39,6 +39,8 @@ local zoneReveal = ns.zoneReveal
 -- Texture caches for map exploration reveal
 local overlayTextureCache, tileExists = {}, {}
 
+local setAlpha = getmetatable(CreateFrame("Frame")).__index.SetAlpha
+
 -- Default settings
 -- These will be overwritten by saved settings,
 -- so don't edit anything here.
@@ -488,7 +490,7 @@ local OnUpdate_MapMovementFader = function(self, elapsed)
 				self:SetScript("OnUpdate", nil)
 			end
 		end
-		self.Canvas:SetAlpha(self.alpha)
+		setAlpha(self.Canvas, self.alpha)
 	end
 end
 
@@ -516,6 +518,18 @@ local WorldMapFrame_UpdatePositions = function()
 			ns.FadeWhenMovingButton:SetParent(WorldMapFrame.MiniBorderFrame)
 			ns.FadeWhenMovingButton:SetPoint("TOPLEFT", 6 + 12, -28)
 		end
+	end
+end
+
+local WorldMapFrame_UpdateFading = function()
+	if (ClassicWorldMapEnhanced_DB.fadeWhenMoving) then
+		if (IsPlayerMoving()) then
+			ns:OnEvent("PLAYER_STARTED_MOVING")
+		else
+			ns:OnEvent("PLAYER_STOPPED_MOVING")
+		end
+	else
+		ns:OnEvent("PLAYER_STOPPED_MOVING")
 	end
 end
 
@@ -563,15 +577,25 @@ ns.SetUpCanvas = function(self)
 	self.Canvas:ClearAllPoints()
 	self.Canvas:SetPoint("CENTER")
 	self.Canvas:RefreshDetailLayers()
+	self.Canvas.SetAlpha = function() end
+
 	self.Canvas.BorderFrame:SetFrameStrata("MEDIUM")
 	self.Canvas.BorderFrame:SetFrameLevel(1)
 	self.Canvas.BlackoutFrame:Hide()
+	self.Canvas.BlackoutFrame:EnableMouse(false)
+	self.Canvas.BlackoutFrame:SetAlpha(0)
+
+	-- Have to hook this with Questie or in Season of Discovery, so might as well always.
+	if (not self:IsHooked(self.Canvas.BlackoutFrame, "OnShow")) then
+		self:HookScript(self.Canvas.BlackoutFrame, "OnShow", self.Canvas.BlackoutFrame.Hide)
+	end
+
+	-- Make sure fading and initial alpha gets updated.
+	if (not self:IsHooked(self.Canvas, "OnShow")) then
+		self:SecureHook(self.Canvas, "OnShow", WorldMapFrame_UpdateFading)
+	end
 
 	if (ns.HasQuestHelper) then
-
-		if (not self:IsHooked(self.Canvas.BlackoutFrame, "OnShow")) then
-			self:HookScript(self.Canvas.BlackoutFrame, "OnShow", self.Canvas.BlackoutFrame.Hide)
-		end
 
 		if (not self:IsHooked(self.Canvas, "Maximize")) then
 			self:SecureHook(self.Canvas, "Maximize", WorldMapFrame_Maximize)
@@ -635,16 +659,7 @@ ns.SetUpFading = function(self)
 	button:SetChecked(ClassicWorldMapEnhanced_DB.fadeWhenMoving)
 	button:SetScript("OnClick", function()
 		ClassicWorldMapEnhanced_DB.fadeWhenMoving = button:GetChecked()
-
-		if (ClassicWorldMapEnhanced_DB.fadeWhenMoving) then
-			if (IsPlayerMoving()) then
-				self:OnEvent("PLAYER_STARTED_MOVING")
-			else
-				self:OnEvent("PLAYER_STOPPED_MOVING")
-			end
-		else
-			self:OnEvent("PLAYER_STOPPED_MOVING")
-		end
+		WorldMapFrame_UpdateFading()
 	end)
 
 	button:Show()
@@ -845,6 +860,7 @@ ns.OnEvent = function(self, event, ...)
 			self:StartFading()
 		else
 			self:StopFading()
+			setAlpha(self.Canvas, .9)
 		end
 
 	end
