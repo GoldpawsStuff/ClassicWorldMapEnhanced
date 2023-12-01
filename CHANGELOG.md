@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.39-Release] 2023-12-01
+### Fixed
+- The blackout frame in fullscreen mode should properly disappear in Season of Discovery now.
+- Opacity should now be correct upon showing the map, it does no longer require movement.
+
 ## [2.0.38-Release] 2023-11-17
 - Updated for WoW Client Patch 1.15.0.
 
