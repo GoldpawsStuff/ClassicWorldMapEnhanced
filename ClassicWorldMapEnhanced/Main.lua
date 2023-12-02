@@ -6,6 +6,7 @@ end
 
 ns = LibStub("AceAddon-3.0"):NewAddon(ns, Addon, "LibMoreEvents-1.0", "AceConsole-3.0", "AceHook-3.0")
 
+-- Addon localization
 local L = LibStub("AceLocale-3.0"):GetLocale(Addon)
 
 -- GLOBALS: C_Map, C_MapExplorationInfo, MapUtil, UIParent
@@ -16,6 +17,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale(Addon)
 -- GLOBALS: MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_NONE, MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_SMOOTH, MAP_CANVAS_MOUSE_WHEEL_ZOOM_BEHAVIOR_FULL
 
 -- Lua API
+local getmetatable = getmetatable
 local ipairs = ipairs
 local math_ceil = math.ceil
 local math_floor = math.floor
@@ -41,13 +43,129 @@ local overlayTextureCache, tileExists = {}, {}
 
 local setAlpha = getmetatable(CreateFrame("Frame")).__index.SetAlpha
 
+-- Saved Settings & Options Menu
+----------------------------------------------------
+-- Libraries
+local AceConfigDialog = LibStub("AceConfigDialog-3.0")
+local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
+
 -- Default settings
 -- These will be overwritten by saved settings,
 -- so don't edit anything here.
-ClassicWorldMapEnhanced_DB = {
+local defaults = {
+	enablePlayerCoordinates = true,
+	enableCursorCoordinates = true,
+	alphaWhenStationary = .9,
+	alphaWhenMoving = .7,
 	fadeWhenMoving = true,
 	revealUnexploredAreas = true
 }
+
+ClassicWorldMapEnhanced_DB = CopyTable(defaults)
+
+-- Blizzard overwrites the entire table with the saved table,
+-- so newly added options will all be set to nil.
+-- We need to manually validate the saved settings
+-- to make sure new values are set to their defaults.
+local validator = CreateFrame("Frame")
+validator:RegisterEvent("ADDON_LOADED")
+validator:SetScript("OnEvent", function(self, event, addon)
+	if (addon ~= Addon) then return end
+	self:UnregisterAllEvents()
+	for k,v in next,defaults do
+		if (ClassicWorldMapEnhanced_DB[k] == nil) then
+			ClassicWorldMapEnhanced_DB[k] = v
+		end
+	end
+end)
+
+local setter = function(info,val)
+	ClassicWorldMapEnhanced_DB[info[#info]] = val
+	if (ns.Forceupdate) then
+		ns:Forceupdate()
+	end
+end
+
+local getter = function(info)
+	return ClassicWorldMapEnhanced_DB[info[#info]]
+end
+
+local getsetting = function(info, optionName)
+	return ClassicWorldMapEnhanced_DB[optionName]
+end
+
+local optionDB = {
+	type = "group",
+	args = {
+		alphaWhenStationary = {
+			name = L["Map opacity"],
+			desc = L["Sets the map opacity when not moving."],
+			order = 10,
+			type = "range", width = "full", min = .1, max = 1, step = .1,
+			set = setter,
+			get = getter
+		},
+		enablePlayerCoordinates = {
+			name = L["Show player coordinates"],
+			desc = L["Show map coordinates of the player's current location."],
+			order = 12,
+			width = "full",
+			type = "toggle",
+			set = setter,
+			get = getter
+		},
+		enableCursorCoordinates = {
+			name = L["Show cursor coordinates"],
+			desc = L["Show map coordinates of the mouse cursor."],
+			order = 14,
+			width = "full",
+			type = "toggle",
+			set = setter,
+			get = getter
+		},
+		revealUnexploredAreas = {
+			order = 20,
+			name = L["Fog of War"],
+			desc = L["Enable the fog of war, covering the areas of the map you haven't yet explored."],
+			width = "full",
+			type = "toggle",
+			set = function(info, value) setter(info, not value) end,
+			get = function(info) return not getter(info) end
+		},
+		fadeWhenMoving = {
+			order = 30,
+			name = L["Fade when moving"],
+			desc = L["Fades the map out when moving to allow you to see your character and its closest surroundings."],
+			width = "full",
+			type = "toggle",
+			set = setter,
+			get = getter
+		},
+		alphaWhenMoving = {
+			name = L["Map opacity when moving"],
+			desc = L["Sets the map opacity when moving."],
+			order = 40,
+			type = "range", width = "full", min = .1, max = 1, step = .1,
+			disabled = function(info) return not getsetting(info, "fadeWhenMoving") end,
+			set = setter,
+			get = getter
+		}
+	}
+}
+
+local addonName = L["Enhanced WorldMap"]
+
+AceConfigRegistry:RegisterOptionsTable(addonName, optionDB)
+AceConfigDialog:SetDefaultSize(addonName, 404, 306)
+AceConfigDialog:AddToBlizOptions(addonName, addonName)
+
+SLASH_ENHANCED_WORLDMAP_CLASSIC1 = "/ewm"
+SlashCmdList["ENHANCED_WORLDMAP_CLASSIC"] = function()
+	if (AceConfigRegistry:GetOptionsTable(addonName)) then
+		AceConfigDialog:Open(addonName)
+		return
+	end
+end
 
 -- Utility
 ----------------------------------------------------
@@ -510,15 +628,15 @@ local WorldMapFrame_UpdatePositions = function()
 		end
 	end
 
-	if (ns.FadeWhenMovingButton) then
-		if (WorldMapFrame.isMaximized) then
-			ns.FadeWhenMovingButton:SetParent(WorldMapFrame.BorderFrame)
-			ns.FadeWhenMovingButton:SetPoint("TOPLEFT", 6, 0)
-		else
-			ns.FadeWhenMovingButton:SetParent(WorldMapFrame.MiniBorderFrame)
-			ns.FadeWhenMovingButton:SetPoint("TOPLEFT", 6 + 12, -28)
-		end
-	end
+	--if (ns.FadeWhenMovingButton) then
+	--	if (WorldMapFrame.isMaximized) then
+	--		ns.FadeWhenMovingButton:SetParent(WorldMapFrame.BorderFrame)
+	--		ns.FadeWhenMovingButton:SetPoint("TOPLEFT", 6, 0)
+	--	else
+	--		ns.FadeWhenMovingButton:SetParent(WorldMapFrame.MiniBorderFrame)
+	--		ns.FadeWhenMovingButton:SetPoint("TOPLEFT", 6 + 12, -28)
+	--	end
+	--end
 end
 
 local WorldMapFrame_UpdateFading = function()
@@ -638,31 +756,31 @@ ns.SetUpFading = function(self)
 
 	self.FadeTimer = CreateFrame("Frame")
 	self.FadeTimer.elapsed = 0
-	self.FadeTimer.stopAlpha = .9
-	self.FadeTimer.moveAlpha = .5
+	self.FadeTimer.stopAlpha = ClassicWorldMapEnhanced_DB.alphaWhenStationary
+	self.FadeTimer.moveAlpha = ClassicWorldMapEnhanced_DB.alphaWhenMoving
 	self.FadeTimer.stepIn = .05
 	self.FadeTimer.stepOut = .05
 	self.FadeTimer.throttle = .02
 	self.FadeTimer.Canvas = self.Canvas
 
-	local button = CreateFrame("CheckButton", nil, WorldMapFrame.BorderFrame, "OptionsCheckButtonTemplate")
-	button:SetPoint("TOPLEFT", 6, 0)
-	button:SetSize(24, 24)
-
-	self.FadeWhenMovingButton = button
-
-	button.msg = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	button.msg:SetPoint("LEFT", 24, 0)
-	button.msg:SetText(L["Fade when moving"])
-
-	button:SetHitRectInsets(0, 0 - button.msg:GetWidth(), 0, 0)
-	button:SetChecked(ClassicWorldMapEnhanced_DB.fadeWhenMoving)
-	button:SetScript("OnClick", function()
-		ClassicWorldMapEnhanced_DB.fadeWhenMoving = button:GetChecked()
-		WorldMapFrame_UpdateFading()
-	end)
-
-	button:Show()
+	--	local button = CreateFrame("CheckButton", nil, WorldMapFrame.BorderFrame, "OptionsCheckButtonTemplate")
+	--	button:SetPoint("TOPLEFT", 6, 0)
+	--	button:SetSize(24, 24)
+	--
+	--	self.FadeWhenMovingButton = button
+	--
+	--	button.msg = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	--	button.msg:SetPoint("LEFT", 24, 0)
+	--	button.msg:SetText(L["Fade when moving"])
+	--
+	--	button:SetHitRectInsets(0, 0 - button.msg:GetWidth(), 0, 0)
+	--	button:SetChecked(ClassicWorldMapEnhanced_DB.fadeWhenMoving)
+	--	button:SetScript("OnClick", function()
+	--		ClassicWorldMapEnhanced_DB.fadeWhenMoving = button:GetChecked()
+	--		WorldMapFrame_UpdateFading()
+	--	end)
+	--
+	--	button:Show()
 
 	self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnEvent")
 	self:RegisterEvent("PLAYER_STARTED_MOVING", "OnEvent")
@@ -722,57 +840,59 @@ end
 -- Set up the Fog of War removal.
 ns.SetUpMapReveal = function(self)
 
-	local button = CreateFrame("CheckButton", nil, WorldMapFrame.BorderFrame, "OptionsCheckButtonTemplate")
-	button:SetPoint("TOPRIGHT", -260, 0)
-	button:SetSize(24, 24)
+	--	local button = CreateFrame("CheckButton", nil, WorldMapFrame.BorderFrame, "OptionsCheckButtonTemplate")
+	--	button:SetPoint("TOPRIGHT", -260, 0)
+	--	button:SetSize(24, 24)
+	--
+	--	button.msg = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	--	button.msg:SetPoint("LEFT", 24, 0)
+	--	button.msg:SetText(L["Fog of War"])
+	--
+	--	button:SetHitRectInsets(0, 0 - button.msg:GetWidth(), 0, 0)
+	--	button:SetChecked(not ClassicWorldMapEnhanced_DB.revealUnexploredAreas)
+	--	button:SetScript("OnClick", function(self)
+	--		ClassicWorldMapEnhanced_DB.revealUnexploredAreas = not ClassicWorldMapEnhanced_DB.revealUnexploredAreas
+		--
+	--		-- This updates existing overlay textures.
+	--		Overlay_UpdateTextures()
+		--
+	--		-- This creates new ones, making the fog disappear forever. Bad idea.
+	--		--for pin in next,pins do
+	--		--	Overlay_RefreshTextures(pin)
+	--		--end
+			--
+	--	end)
+	--
+	--	self.FogOfWarButton = button
 
-	button.msg = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	button.msg:SetPoint("LEFT", 24, 0)
-	button.msg:SetText(L["Fog of War"])
-
-	button:SetHitRectInsets(0, 0 - button.msg:GetWidth(), 0, 0)
-	button:SetChecked(not ClassicWorldMapEnhanced_DB.revealUnexploredAreas)
-	button:SetScript("OnClick", function(self)
-		ClassicWorldMapEnhanced_DB.revealUnexploredAreas = not ClassicWorldMapEnhanced_DB.revealUnexploredAreas
-
-		-- This updates existing overlay textures.
-		Overlay_UpdateTextures()
-
-		-- This creates new ones, making the fog disappear forever. Bad idea.
-		--for pin in next,pins do
-		--	Overlay_RefreshTextures(pin)
-		--end
-
-	end)
-
-	if (ns:IsAddOnEnabled("Questie")) then
-		local isHooked
-
-		local UpdatePosition = function()
-			local qbutton = _G.Questie_Toggle
-			if (qbutton) then
-				local point, anchor, rpoint, x, y = qbutton:GetPoint()
-				if (point == "RIGHT" and rpoint == "LEFT" and anchor == _G.WorldMapFrameCloseButton) then
-					button:ClearAllPoints()
-					button:SetPoint("TOPRIGHT", -(24 + 10 + button.msg:GetWidth() + 10 + qbutton:GetWidth()), 0)
-				end
-			end
-		end
-
-		local Update = function()
-			local qbutton = _G.Questie_Toggle
-			if (qbutton) then
-				if (not isHooked) then
-					hooksecurefunc(qbutton, "SetPoint", UpdatePosition)
-					isHooked = true
-				end
-				UpdatePosition()
-			end
-		end
-		button:HookScript("OnShow", Update)
-	end
-
-	button:Show()
+	--	if (ns:IsAddOnEnabled("Questie")) then
+	--		local isHooked
+		--
+	--		local UpdatePosition = function()
+	--			local qbutton = _G.Questie_Toggle
+	--			if (qbutton) then
+	--				local point, anchor, rpoint, x, y = qbutton:GetPoint()
+	--				if (point == "RIGHT" and rpoint == "LEFT" and anchor == _G.WorldMapFrameCloseButton) then
+	--					button:ClearAllPoints()
+	--					button:SetPoint("TOPRIGHT", -(24 + 10 + button.msg:GetWidth() + 10 + qbutton:GetWidth()), 0)
+	--				end
+	--			end
+	--		end
+		--
+	--		local Update = function()
+	--			local qbutton = _G.Questie_Toggle
+	--			if (qbutton) then
+	--				if (not isHooked) then
+	--					hooksecurefunc(qbutton, "SetPoint", UpdatePosition)
+	--					isHooked = true
+	--				end
+	--				UpdatePosition()
+	--			end
+	--		end
+	--		button:HookScript("OnShow", Update)
+	--	end
+	--
+	--	button:Show()
 
 	for pin in WorldMapFrame:EnumeratePinsByTemplate("MapExplorationPinTemplate") do
 		hooksecurefunc(pin, "RefreshOverlays", Overlay_RefreshTextures)
@@ -831,6 +951,23 @@ ns.StopFading = function(self)
 	self.FadeTimer.fadeDirection = "IN"
 	self.FadeTimer.isFading = true
 	self.FadeTimer:SetScript("OnUpdate", OnUpdate_MapMovementFader)
+end
+
+ns.Forceupdate = function(self)
+
+	local db = ClassicWorldMapEnhanced_DB
+
+	self.FadeTimer.stopAlpha = db.alphaWhenStationary
+	self.FadeTimer.moveAlpha = db.alphaWhenMoving
+
+	--self.FadeWhenMovingButton:SetChecked(db.fadeWhenMoving)
+	--self.FogOfWarButton:SetChecked(not db.revealUnexploredAreas)
+
+	self.PlayerCoordinates:SetShown(db.enablePlayerCoordinates)
+	self.CursorCoordinates:SetShown(db.enableCursorCoordinates)
+
+	Overlay_UpdateTextures()
+	WorldMapFrame_UpdateFading()
 end
 
 -- Addon Init & Events
