@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.1.40-Release] 2023-12-02
+### Added
+- Added an options menu accessible from the blizzard interface options addons menu or with `/ewm`.
+- Added all current options to the menu and removed them from the map.
+- Added the option to set the opacity of the map while moving and while stationary.
+
+### Removed
+- Removed the fog of war button as this is in the options menu now.
+- Removed the fade when moving buttons as this is in the options menu now.
+
 ## [2.0.39-Release] 2023-12-01
 ### Fixed
 - The blackout frame in fullscreen mode should properly disappear in Season of Discovery now.
