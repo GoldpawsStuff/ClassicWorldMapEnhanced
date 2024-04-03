@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. All notable
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.1.43-Release] 2024-04-03
+### Fixed
+- Fixed an issue where some settings like visibility of coordinates wasn't applied after login, relog or reload.
+
 ## [2.1.42-Release] 2024-04-03
 - Updated for WoW Client Patch 1.15.2.
 
