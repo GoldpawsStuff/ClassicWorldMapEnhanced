@@ -922,6 +922,8 @@ ns.SetUpMap = function(self)
 	self:SetUpZoneLevels()
 	self:SetUpMapReveal()
 	self:FixBlizzardBugs()
+	self:Forceupdate()
+
 end
 
 -- Fix BC Bugs
